@@ -1,0 +1,4 @@
+pandas>=1.5
+openpyxl>=3.0
+requests>=2.28
+PyMuPDF>=1.23

@@ -1,0 +1,9 @@
+__pycache__/
+*.pyc
+*.stackdump
+
+# data/: commit only the small saved downloads that make a fresh clone instant and reproducible
+/data/*
+!/data/osm_power.json
+!/data/nominatim_cache.json
+!/data/state_borders.json
