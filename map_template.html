@@ -49,6 +49,18 @@
   .nm { margin-top: 6px; font-size: 12.5px; }
   .nm .d { color: var(--desc); font-weight: 600; } .nm .g { color: var(--gpc); font-weight: 600; }
   .meta { color: var(--muted); font-size: 11.5px; margin-top: 5px; }
+  /* hover readout: top-right, clear of #detail which sits bottom-right */
+  #hoverinfo { position: absolute; right: 58px; top: 14px; width: 270px; max-width: calc(100% - 28px);
+               z-index: 801; background: var(--panel); border: 1px solid var(--line); border-radius: 8px;
+               box-shadow: 0 4px 16px rgba(0,0,0,.13); padding: 10px 12px; pointer-events: none; }
+  #hoverinfo .ht { font-size: 12px; font-weight: 700; letter-spacing: .01em; }
+  #hoverinfo .hs { font-size: 11px; color: var(--muted); margin-top: 1px; }
+  #hoverinfo .hrow { font-size: 11.5px; margin-top: 6px; line-height: 1.35; }
+  #hoverinfo .hid { font-weight: 700; }
+  #hoverinfo .hsplit { margin-top: 8px; padding-top: 7px; border-top: 1px solid var(--line); }
+  #hoverinfo .hcount { font-size: 15px; font-weight: 700; }
+  #hoverinfo.two { border-color: #c9a227; box-shadow: 0 4px 16px rgba(201,162,39,.22); }
+
   #detail { position: absolute; right: 14px; bottom: 26px; width: 390px; max-width: calc(100% - 28px); max-height: 56%; overflow-y: auto; z-index: 800;
     background: #fff; border: 1px solid var(--line); border-radius: 12px; box-shadow: 0 8px 28px rgba(20,30,45,.22); padding: 12px 14px; display: none; }
   #detail .x { position: absolute; top: 6px; right: 8px; border: 0; background: transparent; font-size: 20px; line-height: 1; cursor: pointer; color: var(--muted); }
@@ -123,6 +135,7 @@
   </aside>
   <main id="mapwrap">
     <div id="map" aria-label="Map of planned projects"></div>
+    <div id="hoverinfo" aria-live="polite" hidden></div>
     <section id="detail" aria-live="polite"></section>
   </main>
 </div>
@@ -151,6 +164,13 @@ map.createPane('selected').style.zIndex = 470;      // the selected pair sits ab
 const layerProjects = L.layerGroup().addTo(map);
 const layerOverlaps = L.layerGroup().addTo(map);
 const layerSel = L.layerGroup().addTo(map);
+
+// Every 25-mile circle currently on the map, so the hover readout can work out
+// which ones the cursor is inside. Leaflet's own mouseover only fires for the
+// topmost shape, which is exactly the case we care about -- two circles that
+// intersect -- so containment is computed from the cursor position instead.
+const MILE_M = 1609.34, RADIUS_MI = 25;
+let rings = [];
 let selected = null, visible = [], items = [];
 
 function popup(p) {
@@ -241,6 +261,7 @@ function render() {
   document.getElementById('miles-out').textContent = document.getElementById('miles').value + ' mi';
   const inOv = new Set(); visible.forEach(o => { inOv.add(o.a); inOv.add(o.b); });
   layerProjects.clearLayers(); layerOverlaps.clearLayers(); layerSel.clearLayers();
+  rings = [];
   map.getPane('overlaps').style.opacity = 1;
   const showAll = document.getElementById('showall').checked;
   const showPartners = document.getElementById('partners').checked;
@@ -250,8 +271,10 @@ function render() {
     else if (showAll) drawProject(p, layerProjects, {weight: 2, opacity: .35});
   });
   if (document.getElementById('radii').checked) {      // optional: the 25-mile circle for every overlapping Dominion project
-    DATA.projects.filter(p => inOv.has(p.id) && p.util.startsWith('Dominion')).forEach(p =>
-      L.circle(p.c, {radius: 25 * 1609.34, color: COL.desc, weight: 1.2, dashArray: '4 6', fillColor: COL.desc, fillOpacity: .04, interactive: false}).addTo(layerOverlaps));
+    DATA.projects.filter(p => inOv.has(p.id) && p.util.startsWith('Dominion')).forEach(p => {
+      const c = L.circle(p.c, {radius: 25 * 1609.34, color: COL.desc, weight: 1.2, dashArray: '4 6', fillColor: COL.desc, fillOpacity: .04, interactive: false}).addTo(layerOverlaps);
+      rings.push({kind: 'all', p: p, layer: c, base: {weight: 1.2, fillOpacity: .04}});
+    });
   }
   const nD = DATA.projects.filter(p => p.util.startsWith('Dominion') && p.c).length;
   const nG = DATA.projects.filter(p => p.util === 'Georgia Power' && p.c && (showPartners || ['GPC', 'SAV'].includes(p.sponsor))).length;
@@ -306,6 +329,8 @@ function drawSelection(o, fly) {
   // the overlap test, drawn: a 25-mile circle around the Dominion project's centre.
   // A Georgia Power project whose centre falls inside the circle is an overlap.
   const ring = L.circle(a.c, {radius: 25 * 1609.34, color: COL.desc, weight: 2.5, dashArray: '8 7', fillColor: COL.desc, fillOpacity: .07, interactive: false}).addTo(layerSel);
+  rings = rings.filter(r => r.kind !== 'sel');
+  rings.push({kind: 'sel', p: a, layer: ring, base: {weight: 2.5, fillOpacity: .07}});
   // every Georgia Power project inside the same circle; each gets a numbered badge (1 = the selected pair)
   const inside = insideList(o);
   inside.forEach((x, i) => { const g = byId[x.b]; if (g && i > 0) drawProject(g, layerSel, {weight: 4, opacity: .95, pane: 'selected'}); });
@@ -376,10 +401,81 @@ function renderDetail(o, a, b) {
     ${relatedHtml(o)}
     <div class="assume">Estimate assumptions: ROW widths ${Object.entries(A.rowWidth).map(([k, v]) => k + ' kV=' + v + ' ft').join(', ')}; a second line beside an existing one adds ${Math.round(A.extra * 100)}% width; joint delivery avoids ${Math.round(A.lowPct * 100)}-${Math.round(A.highPct * 100)}% of the shared cost (a shared site counts ${Math.round(A.siteShare * 100)}% of the Dominion project cost), faded to zero as the schedule gap reaches ${(A.taper / 365).toFixed(0)} years. Lines are drawn straight between their two substations.</div>`;
   el.querySelectorAll('[data-go]').forEach(a => a.addEventListener('click', e => { e.preventDefault(); select(a.dataset.go, false); }));
-  el.querySelector('.x').addEventListener('click', () => { selected = null; el.style.display = 'none'; layerSel.clearLayers(); map.getPane('overlaps').style.opacity = 1; renderList(); });
+  el.querySelector('.x').addEventListener('click', () => { selected = null; el.style.display = 'none'; layerSel.clearLayers(); rings = rings.filter(r => r.kind !== 'sel'); clearHover(); map.getPane('overlaps').style.opacity = 1; renderList(); });
 }
 
 if (!DATA.partners.length) document.getElementById('partners').closest('label').style.display = 'none';
+
+// ---- hover readout -------------------------------------------------------
+// Move the cursor over the 25-mile circles. Because containment is worked out
+// from the cursor's own position rather than from Leaflet's topmost-shape
+// hover, standing where two circles intersect reports BOTH of them -- and that
+// intersection is the interesting bit: any Georgia Power project sitting there
+// is within reach of two separate Dominion projects at once.
+const hoverBox = document.getElementById('hoverinfo');
+let hoverIds = '';
+
+function trim(t, n) { return t.length > n ? t.slice(0, n - 1).trimEnd() + '\u2026' : t; }
+
+function ringsUnder(latlng) {
+  return rings.filter(r => map.distance(latlng, r.p.c) <= RADIUS_MI * MILE_M);
+}
+
+function clearHover() {
+  rings.forEach(r => r.layer.setStyle(r.base));
+  hoverBox.hidden = true;
+  hoverBox.classList.remove('two');
+  hoverIds = '';
+}
+
+// Georgia Power projects inside every one of the hovered circles at once.
+function sharedGeorgia(hits) {
+  const showPartners = document.getElementById('partners').checked;
+  return DATA.projects.filter(g =>
+    g.c && g.util === 'Georgia Power'
+    && (showPartners || ['GPC', 'SAV'].includes(g.sponsor))
+    && hits.every(r => map.distance(L.latLng(g.c), L.latLng(r.p.c)) <= RADIUS_MI * MILE_M));
+}
+
+function renderHover(hits) {
+  const key = hits.map(r => r.p.id).join(',');
+  if (key === hoverIds) return;              // nothing changed, leave the DOM alone
+  hoverIds = key;
+
+  rings.forEach(r => r.layer.setStyle(
+    hits.includes(r) ? {weight: 3, fillOpacity: .13} : r.base));
+
+  const shared = sharedGeorgia(hits);
+  const many = hits.length > 1;
+  hoverBox.classList.toggle('two', many);
+  hoverBox.innerHTML =
+    `<div class="ht">${many ? hits.length + ' circles overlap here' : 'Inside 1 circle'}</div>
+     <div class="hs">${many
+        ? 'this ground is within 25 mi of ' + hits.length + ' Dominion projects'
+        : 'within 25 mi of this Dominion project'}</div>`
+    + hits.slice(0, 3).map(r =>
+        `<div class="hrow"><span class="hid">${esc(r.p.id)}</span> ${esc(trim(r.p.name, 46))}</div>`).join('')
+    + (hits.length > 3 ? `<div class="hrow hs">+ ${hits.length - 3} more</div>` : '')
+    + `<div class="hsplit"><span class="hcount">${shared.length}</span>
+         <span class="hs">Georgia Power project${shared.length === 1 ? '' : 's'} ${many ? 'inside all of them' : 'inside'}</span></div>`
+    + (many && shared.length
+        ? `<div class="hrow">${shared.slice(0, 4).map(g => esc(g.id)).join(', ')}${shared.length > 4 ? ' +' + (shared.length - 4) + ' more' : ''}</div>`
+        : '');
+  hoverBox.hidden = false;
+}
+
+let hoverQueued = false;
+map.on('mousemove', e => {
+  if (hoverQueued) return;                   // one update per animation frame
+  hoverQueued = true;
+  requestAnimationFrame(() => {
+    hoverQueued = false;
+    const hits = ringsUnder(e.latlng);
+    if (hits.length) renderHover(hits); else clearHover();
+  });
+});
+map.on('mouseout', clearHover);
+
 ['miles', 'gap', 'conf', 'showall', 'group', 'radii', 'partners'].forEach(id => document.getElementById(id).addEventListener('input', render));
 render();
 if (visible.length) select(visible[0].id, false);

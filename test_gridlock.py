@@ -293,6 +293,55 @@ try {
   document.querySelector('.card').click();
   out.detail = (document.querySelector('#detail') || document.body).textContent.slice(0, 600);
   out.selected_on_load = SELECTED_ON_LOAD;
+
+  // ---- hover readout over the 25-mile circles ----
+  const box = el('hoverinfo');
+  out.hover_box_exists = !!box;
+  if (box) {
+    const rr = el('radii'); rr.checked = true; fire(rr);
+    out.hover_rings = rings.length;
+    clearHover();
+    out.hover_hidden_at_rest = box.hidden;
+
+    // the midpoint of the two closest circle centres is inside both
+    let best = null;
+    for (let i = 0; i < rings.length; i++) for (let j = i + 1; j < rings.length; j++) {
+      const d = map.distance(L.latLng(rings[i].p.c), L.latLng(rings[j].p.c));
+      if (d < 2 * RADIUS_MI * MILE_M && (!best || d < best.d)) best = {i, j, d};
+    }
+    out.hover_has_intersection = !!best;
+    if (best) {
+      const a = rings[best.i].p.c, b = rings[best.j].p.c;
+      const mid = L.latLng((a[0] + b[0]) / 2, (a[1] + b[1]) / 2);
+      const hits = ringsUnder(mid);
+      out.hover_hits_multi = hits.length;
+      renderHover(hits);
+      out.hover_shown_multi = !box.hidden;
+      out.hover_multi_class = box.classList.contains('two');
+      out.hover_multi_text = box.textContent.replace(/\s+/g, ' ').trim().slice(0, 120);
+      out.hover_highlighted = rings.filter(r => r.layer.options.weight === 3).length;
+      // every Georgia project the panel counts must really be in range of all hits
+      const shared = sharedGeorgia(hits);
+      out.hover_shared_ok = shared.every(g =>
+        hits.every(r => map.distance(L.latLng(g.c), L.latLng(r.p.c)) <= RADIUS_MI * MILE_M));
+      out.hover_shared_n = shared.length;
+    }
+    // a point inside exactly one circle
+    let solo = null;
+    for (let dx = 0; dx < 0.5 && !solo; dx += 0.01) {
+      const pt = L.latLng(rings[0].p.c[0], rings[0].p.c[1] + dx);
+      if (ringsUnder(pt).length === 1) solo = pt;
+    }
+    if (solo) {
+      renderHover(ringsUnder(solo));
+      out.hover_solo_text = box.textContent.replace(/\s+/g, ' ').trim().slice(0, 60);
+      out.hover_solo_class = box.classList.contains('two');
+    }
+    clearHover();
+    out.hover_hidden_after = box.hidden;
+    out.hover_styles_restored = rings.every(r => r.layer.options.weight === r.base.weight);
+    rr.checked = false; fire(rr);
+  }
 } catch (e) { out.error = e.message; }
 const d = document.createElement('div'); d.id = 'PROBE';
 d.textContent = JSON.stringify(out); document.body.appendChild(d);
@@ -361,6 +410,36 @@ def test_map():
     check("detail panel shows a cost figure", "$" in d)
     check("top opportunity is selected on load",
           bool(r.get("selected_on_load")), r.get("selected_on_load"))
+
+    # Hovering the 25-mile circles. Leaflet's own mouseover reports only the
+    # topmost shape, so intersecting circles are exactly the case that breaks;
+    # containment is computed from the cursor instead.
+    check("hover readout panel exists", r.get("hover_box_exists"))
+    check("hover panel hidden until the cursor is over a circle",
+          r.get("hover_hidden_at_rest") is True)
+    check("circles are registered for hover", r.get("hover_rings", 0) > 1, r.get("hover_rings"))
+    check("the map has intersecting circles to hover", r.get("hover_has_intersection"))
+    check("a point in the intersection reports every circle it is inside",
+          r.get("hover_hits_multi", 0) >= 2, r.get("hover_hits_multi"))
+    check("hovering an intersection shows the panel", r.get("hover_shown_multi"))
+    check("intersection is styled differently from a single circle",
+          r.get("hover_multi_class"))
+    check("panel names how many circles overlap",
+          "overlap here" in (r.get("hover_multi_text") or ""), r.get("hover_multi_text"))
+    check("every circle under the cursor is highlighted",
+          r.get("hover_highlighted") == r.get("hover_hits_multi"),
+          (r.get("hover_highlighted"), r.get("hover_hits_multi")))
+    check("Georgia projects counted are inside all hovered circles",
+          r.get("hover_shared_ok"), r.get("hover_shared_n"))
+    if r.get("hover_solo_text"):
+        check("a single circle reads as one, not as an intersection",
+              "Inside 1 circle" in r["hover_solo_text"] and not r.get("hover_solo_class"),
+              r.get("hover_solo_text"))
+    else:
+        skip("single-circle hover wording", "no point found inside exactly one circle")
+    check("leaving the circles hides the panel", r.get("hover_hidden_after"))
+    check("leaving the circles restores the circle styling",
+          r.get("hover_styles_restored"))
 
 
 if __name__ == "__main__":
