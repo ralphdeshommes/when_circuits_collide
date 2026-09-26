@@ -63,6 +63,21 @@
   .badge { font-size: 10px; text-transform: uppercase; letter-spacing: .4px;
            padding: 2px 6px; border-radius: 10px; color: #fff; white-space: nowrap; }
   .empty { padding: 20px 16px; color: var(--muted); font-size: 13px; }
+  .est-chip { margin-top: 6px; font-size: 11px; font-weight: 600; color: #2b6a3f;
+              background: #e7f5ec; border: 1px solid #bfe3cd; border-radius: 4px;
+              padding: 3px 6px; display: inline-block; }
+
+  /* Coordination estimate block inside an overlap popup */
+  .est { margin-top: 10px; padding: 9px 10px; background: #f2f9f4;
+         border: 1px solid #cfe8d8; border-radius: 6px; }
+  .est-head { font-weight: 600; font-size: 12px; color: #2b6a3f;
+              display: flex; align-items: center; gap: 6px; }
+  .est-tag { font-size: 9.5px; text-transform: uppercase; letter-spacing: .4px;
+             background: #2b6a3f; color: #fff; border-radius: 8px; padding: 1px 6px; }
+  .est-num { font-size: 16px; font-weight: 700; margin: 3px 0 4px; color: var(--ink); }
+  .est-why { font-size: 11.5px; line-height: 1.4; }
+  .est-caveat { font-size: 10.5px; line-height: 1.35; color: var(--muted);
+                margin-top: 5px; padding-top: 5px; border-top: 1px solid #cfe8d8; }
 
   /* ---- map ---- */
   #map { flex: 1; height: 100%; }
@@ -195,7 +210,23 @@ function overlapPopup(o) {
     <div class="pop-src" style="border-top:none;padding-top:8px;color:var(--ink)">
       <div><b>${esc(o.a_id)}</b> &middot; ${esc(o.a_util)} &middot; ${esc(o.a_date)}<br>${esc(o.a_name)}</div>
       <div style="margin-top:6px"><b>${esc(o.b_id)}</b> &middot; ${esc(o.b_util)} &middot; ${esc(o.b_date)}<br>${esc(o.b_name)}</div>
-    </div>`;
+    </div>
+    ${estimateBlock(o)}`;
+}
+
+/* Coordination estimate. Only the pair we costed carries one, and it is
+   deliberately labelled illustrative: the underlying project costs are not
+   public (Georgia Power redacts them) so the figure rests on assumptions. */
+function estimateBlock(o) {
+  if (!o.estimate) return '';
+  const e = o.estimate;
+  return `<div class="est">
+    <div class="est-head">Coordination opportunity
+      <span class="est-tag">illustrative</span></div>
+    <div class="est-num">${esc(e.range)}</div>
+    <div class="est-why">${esc(e.note)}</div>
+    <div class="est-caveat">${esc(e.caveat)}</div>
+  </div>`;
 }
 
 /* ============================================================================
@@ -258,6 +289,7 @@ function renderList(shown) {
         <span class="badge" style="background:${color}">${o.confidence === 'verified' ? 'verified' : 'check'}</span></div>
       <div class="meta">${o.miles.toFixed(2)} mi apart &middot; ${o.gap_days} days between in-service dates</div>
       <div class="names"><b>${esc(o.a_id)}</b> ${esc(o.a_name)}<br><b>${esc(o.b_id)}</b> ${esc(o.b_name)}</div>
+      ${o.estimate ? `<div class="est-chip">Coordination estimate ${esc(o.estimate.range)}</div>` : ''}
     </div>`;
   }).join('');
 

@@ -18,6 +18,28 @@ import json
 
 import pandas as pd
 
+# ---------------------------------------------------------------------------
+# Coordination estimate (bonus deliverable). Keyed by the two project ids, so
+# the note only ever attaches to the pair it was written for.
+#
+# ILLUSTRATIVE ONLY. No cost figure for either project exists in our data: the
+# DESC source document is titled "$2M+", which is a floor and not a number, and
+# Georgia Power redacts per-project costs in its IRP. The range below is built
+# from assumptions documented step by step in ESTIMATE.md. If you obtain the
+# real DESC_23 budget, put it in ESTIMATE.md step 1 and update RANGE here.
+# ---------------------------------------------------------------------------
+ESTIMATES = {
+    ("DESC_23", "GPC_20277"): {
+        "range": "~$190K - $2.6M",
+        "note": ("Two 230 kV jobs 5.65 mi apart with in-service dates 152 days "
+                 "apart. One crew mobilisation, one laydown yard and one set of "
+                 "right-of-way and survey visits could serve both instead of two."),
+        "caveat": ("Illustrative order of magnitude, not a claimed saving. Built on "
+                   "assumed costs - see ESTIMATE.md. Savings fall to near zero if "
+                   "neither schedule can move."),
+    },
+}
+
 PROJECTS_CSV = "projects_with_overlaps.csv"
 OVERLAPS_CSV = "overlaps.csv"
 OUT = "gridlock_map.html"
@@ -92,6 +114,8 @@ def build_overlaps(df, centers):
             "b_id": r.project_id_b, "b_name": r.project_name_b,
             "b_util": r.utility_b, "b_date": r.in_service_b,
             "a_center": a, "b_center": b,
+            # present only on the pair we costed; the popup hides the block otherwise
+            "estimate": ESTIMATES.get((r.project_id_a, r.project_id_b)),
         })
     return out
 
@@ -117,6 +141,8 @@ if __name__ == "__main__":
     html = open("map_template.html").read().replace("/*__DATA__*/", payload)
     open(OUT, "w").write(html)
 
+    costed = sum(1 for o in overlaps if o["estimate"])
+    print(f"{costed} pair(s) carry a coordination estimate")
     verified = sum(1 for o in overlaps if o["confidence"] == "verified")
     print(f"{len(projects)} projects drawn, {len(overlaps)} overlap pairs "
           f"({verified} verified), longest {max_miles:.1f} mi")
