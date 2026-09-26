@@ -34,7 +34,7 @@ each other, and ranks them as coordination opportunities.
 | | |
 |---|---|
 | Projects parsed | 44 Dominion + 208 Georgia (138 Georgia Power, 70 from its ITS partners GTC / MEAG / DU) |
-| Located | 42 of 44 Dominion, 117 of 138 Georgia Power |
+| Located | 42 of 44 Dominion, 120 of 138 Georgia Power |
 | Overlaps (centres < 25 mi) | **55 pairs**: 8 Dominion projects x 17 Georgia Power projects, which merge into **7 distinct opportunities** |
 | Closer than 10 mi | 13 pairs (3 under 5 mi) |
 | Close in *both* distance and time (< 10 mi and <= 1 yr) | 3 pairs |
@@ -117,6 +117,54 @@ reaches 3 years. Right-of-way land savings are counted only when a project is a 
 All assumptions are listed in `overlaps.py` (`ASSUMPTIONS`), in the workbook's `assumptions`
 sheet, and under every estimate in the map. These are order-of-magnitude figures, not quotes.
 
+## Location guard: implausible spans
+
+A project's two end points are matched by name, and a name can match the wrong place: "GRADY" is both a
+substation and a county 200 miles away. `geocode.py` already guarded against this by throwing away an end
+point when the resulting "line" spanned more than `MAX_LINE_MI` (60 miles) — but only when exactly one of
+the two ends was a weak, place-level match:
+
+```python
+weak = [i for i, r in enumerate(result) if r["how"] != "osm_name"]
+if span > MAX_LINE_MI and len(weak) == 1:       # before
+```
+
+The two worst locations in the dataset had **both** ends place-level, so `len(weak)` was 2 and the check
+skipped them — the exact cases it exists to catch walked straight through:
+
+| Project | Span | What went wrong |
+|---|---|---|
+| GPC_170 GTC: POND FORK - MIDWAY 115KV LINE | 219 mi | Pond Fork in north Georgia, Midway on the coast |
+| GPC_70 GRADY-WEST END 115KV REBUILD | 198 mi | Grady County in far south Georgia, West End in Atlanta |
+
+The guard now fires whenever any end is weak. With one weak end, that end is dropped. With two, the span
+proves at least one is wrong but not which, so both are dropped:
+
+```python
+if span > MAX_LINE_MI and weak:                 # after
+    for w in weak:
+        result[w] = {... "how": "discarded_implausible_span"}
+```
+
+An unlocated project is better than a 200-mile phantom line, because a phantom line has two wrong end
+points that can each invent overlaps.
+
+**Before and after, on the real filings:**
+
+| | Before | After |
+|---|---|---|
+| Projects located | 226 | 224 |
+| Guard fired | 10 end points | 14 end points |
+| Projects spanning > 100 mi | 2 | **0** |
+| Overlapping pairs | 55 | 55 |
+| Distinct opportunities | 7 | 7 |
+
+The headline numbers do not move: those two projects were never close enough to a Dominion project to
+form a pair, so they were drawing fiction on the map without affecting the ranking. The two projects lost
+are now reported honestly as unlocated rather than placed 200 miles wrong.
+
+Checked by `test_gridlock.py`, which asserts no located project spans more than 120 miles.
+
 ## Limits to keep in mind
 
 * **Most overlaps involve dates that have already passed.** Only 4 of the 55 pairs have both in-service
@@ -124,7 +172,9 @@ sheet, and under every estimate in the map. These are order-of-magnitude figures
 * Locations are matched by **name**, not surveyed. 1 of 55 overlaps is *high* confidence, 49 *medium*
   (usually one end point of two located), 5 *low* (street / place level). The map and workbook show this.
 * Projects are drawn as **straight lines** between their two substations; real routes are longer.
-* 21 Georgia Power projects and 2 Dominion projects could not be located. "Rice Hope" is close to
+* Two projects are dropped by the implausible-span guard above rather than placed wrongly; they count
+  among the unlocated.
+* 18 Georgia Power projects and 2 Dominion projects could not be located. "Rice Hope" is close to
   Savannah but has no public coordinates, so it is left unlocated instead of guessed.
 * Georgia dates are the plan's *need date*; Dominion dates are *planned in-service*.
 * The ITS-partner (GTC / MEAG / DU) projects produce no overlaps with Dominion and are left out of the
