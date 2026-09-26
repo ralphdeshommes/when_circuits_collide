@@ -342,10 +342,13 @@ def resolve_project(name, state, osm, nom, sponsor=""):
     if len(result) == 2 and all(r["lat"] is not None for r in result):
         span = haversine_miles(result[0]["lat"], result[0]["lon"], result[1]["lat"], result[1]["lon"])
         weak = [i for i, r in enumerate(result) if r["how"] != "osm_name"]
-        if span > MAX_LINE_MI and len(weak) == 1:      # e.g. a town of the same name 180 mi away
-            w = weak[0]
-            result[w] = {"name": result[w]["name"], "lat": None, "lon": None, "kind": "none", "q": 0,
-                         "how": "discarded_implausible_span"}
+        if span > MAX_LINE_MI and weak:                # e.g. a town of the same name 180 mi away
+            # One weak end: that is the one to drop. Two weak ends: the span says
+            # at least one is wrong but not which, so drop both rather than keep a
+            # 200-mile "line" that would go on to invent overlaps at either end.
+            for w in weak:
+                result[w] = {"name": result[w]["name"], "lat": None, "lon": None, "kind": "none", "q": 0,
+                             "how": "discarded_implausible_span"}
     return eps, result
 
 
