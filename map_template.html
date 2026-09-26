@@ -234,15 +234,24 @@ const fmtDate = s => s ? new Date(s + 'T00:00:00').toLocaleDateString('en-US', {
 
 const byId = {}; DATA.projects.forEach(p => byId[p.id] = p);
 const map = L.map('map', {zoomSnap: 0.25}).fitBounds([[31.7, -84.4], [35.1, -78.9]]);
-// keyless base maps: Esri light-gray (default, with place labels) or the standard OpenStreetMap style
+// Keyless base maps, all from hosts that need no token. Topo is the default:
+// green land and blue water give the map some life, while keeping roads muted
+// enough that the blue and orange project lines still read on top. Esri's
+// street style was rejected for exactly that reason -- its red road network
+// competes with the orange Georgia Power lines.
+const esriTopo = L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Topo_Map/MapServer/tile/{z}/{y}/{x}', {
+  attribution: 'Tiles &copy; Esri &mdash; Esri, HERE, Garmin, &copy; OpenStreetMap contributors',
+  maxNativeZoom: 18, maxZoom: 18}).addTo(map);
 const esriGray = L.layerGroup([
   L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/Canvas/World_Light_Gray_Base/MapServer/tile/{z}/{y}/{x}', {
     attribution: 'Tiles &copy; Esri &mdash; Esri, HERE, Garmin, &copy; OpenStreetMap contributors', maxNativeZoom: 16, maxZoom: 18}),
   L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/Canvas/World_Light_Gray_Reference/MapServer/tile/{z}/{y}/{x}', {
-    maxNativeZoom: 16, maxZoom: 18})]).addTo(map);
+    maxNativeZoom: 16, maxZoom: 18})]);
 const osmStreet = L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', {
   attribution: '&copy; OpenStreetMap contributors', maxZoom: 19});
-L.control.layers({'Light map (Esri)': esriGray, 'Street map (OpenStreetMap)': osmStreet}, null, {position: 'topright', collapsed: true}).addTo(map);
+L.control.layers({'Terrain (Esri Topo)': esriTopo, 'Pale grey (Esri Canvas)': esriGray,
+                  'Street map (OpenStreetMap)': osmStreet},
+                 null, {position: 'topright', collapsed: true}).addTo(map);
 map.createPane('projects').style.zIndex = 420;
 map.createPane('overlaps').style.zIndex = 450;
 map.createPane('selected').style.zIndex = 470;      // the selected pair sits above the (faded) rest
