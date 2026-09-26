@@ -16,6 +16,9 @@ Run:  python build_map.py
 
 import json
 import math
+from pathlib import Path
+
+from overlaps import MAX_MILES, add_centers
 
 import pandas as pd
 
@@ -45,9 +48,10 @@ ESTIMATES = {
     },
 }
 
-PROJECTS_CSV = "projects_with_overlaps.csv"
-OVERLAPS_CSV = "overlaps.csv"
-OUT = "gridlock_map.html"
+BASE = Path(__file__).resolve().parent
+PROJECTS_CSV = BASE / "projects_with_overlaps.csv"
+OVERLAPS_CSV = BASE / "overlaps.csv"
+OUT = BASE / "gridlock_map.html"
 
 # The whole point of the analysis is the GA/SC border, so open the map on the
 # Savannah River between Augusta and Savannah.
@@ -125,10 +129,11 @@ def clean(value):
 
 def build_projects(df):
     """One JSON record per project: its geometry plus everything a popup needs."""
+    df = add_centers(df.copy())
     out = []
     for _, r in df.iterrows():
-        has_a = pd.notna(r.lat_a) and pd.notna(r.lon_a)
-        has_b = pd.notna(r.lat_b) and pd.notna(r.lon_b)
+        has_a = pd.notna(r.lat_a) and pd.notna(r.lon_a) and -90 <= r.lat_a <= 90 and -180 <= r.lon_a <= 180
+        has_b = pd.notna(r.lat_b) and pd.notna(r.lon_b) and -90 <= r.lat_b <= 90 and -180 <= r.lon_b <= 180
         if not (has_a or has_b):
             continue                      # never located, so nothing to draw
         out.append({
@@ -197,12 +202,15 @@ if __name__ == "__main__":
 
     payload = json.dumps({"projects": projects, "overlaps": overlaps,
                           "center": MAP_CENTER, "zoom": MAP_ZOOM,
-                          "maxMiles": 25, "clusters": n_clusters}, allow_nan=False)
+                          "maxMiles": MAX_MILES, "clusters": n_clusters}, allow_nan=False)
     # A literal </script> inside the JSON would close the tag early.
     payload = payload.replace("</", "<\\/")
 
-    html = open("map_template.html").read().replace("/*__DATA__*/", payload)
-    open(OUT, "w").write(html)
+    template = (BASE / "map_template.html").read_text(encoding="utf-8")
+    if template.count("/*__DATA__*/") != 1:
+        raise ValueError("Map template must contain exactly one data placeholder.")
+    html = template.replace("/*__DATA__*/", payload)
+    OUT.write_text(html, encoding="utf-8")
 
     sizes = {}
     for o in overlaps:

@@ -16,6 +16,7 @@ Run:  python overlaps.py
 """
 
 import math
+from pathlib import Path
 
 import pandas as pd
 
@@ -42,8 +43,12 @@ def haversine_miles(lat1, lon1, lat2, lon2):
 
 def add_centers(df):
     """Center = average of endpoint A and B; if only one exists, use that one."""
-    df["lat_center"] = df[["lat_a", "lat_b"]].mean(axis=1, skipna=True)
-    df["lon_center"] = df[["lon_a", "lon_b"]].mean(axis=1, skipna=True)
+    valid_a = df.lat_a.between(-90, 90) & df.lon_a.between(-180, 180)
+    valid_b = df.lat_b.between(-90, 90) & df.lon_b.between(-180, 180)
+    for axis in ("lat", "lon"):
+        endpoints = pd.concat([df[f"{axis}_a"].where(valid_a),
+                               df[f"{axis}_b"].where(valid_b)], axis=1)
+        df[f"{axis}_center"] = endpoints.mean(axis=1, skipna=True)
     return df
 
 
@@ -56,6 +61,8 @@ def score(miles, gap_days):
 def find_overlaps(projects):
     projects = add_centers(projects.copy())
     projects["in_service_date"] = pd.to_datetime(projects["in_service_date"])
+    if projects["in_service_date"].isna().any():
+        raise ValueError("Every project needs an in_service_date to rank overlaps.")
     located = projects.dropna(subset=["lat_center", "lon_center"])
 
     side_a = located[located["utility"] == UTILITY_A]
@@ -83,9 +90,10 @@ def find_overlaps(projects):
                               <= {"sponsor_verified", "manually_verified"} else "needs_check",
             })
 
-    overlaps = pd.DataFrame(rows)
-    if overlaps.empty:
-        return overlaps, projects
+    columns = ["distance_mi", "time_gap (day)", "score", "utility_a",
+               "project_id_a", "project_name_a", "in_service_a", "utility_b",
+               "project_id_b", "project_name_b", "in_service_b", "confidence"]
+    overlaps = pd.DataFrame(rows, columns=columns)
     overlaps = overlaps.sort_values(["score", "distance_mi"], ascending=[False, True]).reset_index(drop=True)
     overlaps.insert(0, "rank", overlaps.index + 1)
     overlaps.insert(1, "overlap_id", [f"OVL_{i}" for i in overlaps["rank"]])
@@ -103,10 +111,11 @@ def find_overlaps(projects):
 
 
 if __name__ == "__main__":
-    projects = pd.read_csv("projects.csv")
+    base = Path(__file__).resolve().parent
+    projects = pd.read_csv(base / "projects.csv")
     overlaps, projects = find_overlaps(projects)
-    overlaps.to_csv("overlaps.csv", index=False)
-    projects.to_csv("projects_with_overlaps.csv", index=False)
+    overlaps.to_csv(base / "overlaps.csv", index=False)
+    projects.to_csv(base / "projects_with_overlaps.csv", index=False)
 
     n_loc = projects["lat_center"].notna().sum()
     print(f"{len(projects)} projects, {n_loc} with coordinates, {len(overlaps)} overlapping pairs\n")

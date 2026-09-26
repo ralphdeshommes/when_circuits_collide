@@ -55,6 +55,7 @@
     padding: 9px 10px; margin: 4px 0; border: 1px solid var(--line); border-left-width: 4px;
     border-radius: 6px; cursor: pointer; background: #fff;
   }
+  .item:focus-visible { outline: 3px solid var(--desc); outline-offset: 2px; }
   .item:hover { background: #f5f8fb; }
   .item.sel { background: #eef5fc; border-color: #9dc4e8; border-left-color: inherit; }
   .item .top { display: flex; justify-content: space-between; gap: 8px; font-weight: 600; font-size: 13px; }
@@ -95,7 +96,8 @@
   .hotspot .u { font-size: 8.5px; font-weight: 600; opacity: .85; letter-spacing: .3px; }
 
   /* ---- map ---- */
-  #map { flex: 1; height: 100%; }
+  #map { flex: 1; height: 100%; min-height: 0; min-width: 0; }
+  .names, .pop-row { overflow-wrap: anywhere; }
   .leaflet-popup-content { margin: 12px 14px; font-size: 13px; line-height: 1.5; }
   .pop-title { font-weight: 600; margin-bottom: 6px; }
   .pop-row { display: flex; gap: 8px; }
@@ -125,7 +127,7 @@
   </header>
 
   <div id="controls">
-    <label>Max distance between project centers: <b><span id="miOut">25</span> mi</b></label>
+    <label for="miles">Max distance between project centers: <b><span id="miOut">25</span> mi</b></label>
     <input type="range" id="miles" min="1" max="25" step="1" value="25">
     <div class="toggle">
       <input type="checkbox" id="onlyVerified">
@@ -138,11 +140,12 @@
   </div>
 
   <div id="legend"></div>
-  <div id="count"></div>
+  <div id="count" role="status" aria-live="polite"></div>
   <div id="list"></div>
 </div>
 
-<div id="map"></div>
+<div id="map" aria-label="Transmission project map"><p class="empty" id="mapLoading">Loading map… If it does not appear, check your internet connection and reload.</p></div>
+<noscript><p class="empty">Enable JavaScript to view the interactive map.</p></noscript>
 
 <script>
 /* ============================================================================
@@ -162,6 +165,8 @@ function getCSS(name) {
    MAP  - base layer, then two panes so overlap lines always sit on top of
    project lines regardless of the order we add them.
    ========================================================================= */
+if (typeof L === 'undefined') throw new Error('Leaflet could not load. Check your internet connection.');
+document.getElementById('mapLoading').remove();
 const map = L.map('map', { center: DATA.center, zoom: DATA.zoom, zoomControl: true });
 
 L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
@@ -192,7 +197,7 @@ DATA.projects.forEach(p => {
 
 /* Popup for a project: everything needed to trace it back to the source PDF. */
 function projectPopup(p) {
-  const ends = p.name_b ? `${esc(p.name_a)} &rarr; ${esc(p.name_b)}`
+  const ends = p.name_a && p.name_b ? `${esc(p.name_a)} &rarr; ${esc(p.name_b)}`
                         : `${esc(p.name_a || p.name_b)} (single endpoint)`;
   return `<div class="pop-title">${esc(p.name)}</div>
     ${row('Project ID', p.id)}
@@ -317,7 +322,9 @@ function drawHotspots(shown) {
       html: `<div class="hotspot ${kind}" style="width:${d}px;height:${d}px;font-size:${Math.round(d / 3)}px">
                <div><div class="n">${n}</div><div class="u">PAIRS</div></div></div>`
     });
-    const m = L.marker(g.at, { icon, pane: 'overlaps' });
+    const m = L.marker(g.at, { icon, pane: 'overlaps',
+      title: `${n} overlapping pairs; activate to expand or collapse`,
+      alt: `${n} overlapping pairs` });
     m.bindPopup(hotspotPopup(g, open));
     m.on('click', () => {
       // expand this cluster into its individual pair lines, or collapse it again
@@ -360,6 +367,10 @@ function visibleOverlaps() {
 function applyFilters() {
   miOut.textContent = slider.value;
   const shown = visibleOverlaps();
+  if (selected !== null && !shown.some(o => o.rank === selected)) {
+    selected = null;
+    map.closePopup();
+  }
   const live = new Set();                      // projects still in a visible pair
   shown.forEach(o => { live.add(o.a_id); live.add(o.b_id); });
 
@@ -401,9 +412,10 @@ function renderList(shown) {
   const list = document.getElementById('list');
   if (!shown.length) { list.innerHTML = '<div class="empty">No pairs match these filters.</div>'; return; }
 
+  const focusedRank = list.contains(document.activeElement) ? document.activeElement.dataset.rank : null;
   list.innerHTML = shown.map(o => {
     const color = o.confidence === 'verified' ? COLORS.verified : COLORS.needs_check;
-    return `<div class="item${selected === o.rank ? ' sel' : ''}" data-rank="${o.rank}"
+    return `<div class="item${selected === o.rank ? ' sel' : ''}" data-rank="${o.rank}" role="button" tabindex="0" aria-pressed="${selected === o.rank}"
                  style="border-left-color:${color}">
       <div class="top"><span>#${o.rank} &middot; score ${o.score.toFixed(3)}</span>
         <span class="badge" style="background:${color}">${o.confidence === 'verified' ? 'verified' : 'check'}</span></div>
@@ -413,8 +425,16 @@ function renderList(shown) {
     </div>`;
   }).join('');
 
-  list.querySelectorAll('.item').forEach(el =>
-    el.addEventListener('click', () => select(+el.dataset.rank, true)));
+  list.querySelectorAll('.item').forEach(el => {
+    el.addEventListener('click', () => select(+el.dataset.rank, true));
+    el.addEventListener('keydown', event => {
+      if (event.key === 'Enter' || event.key === ' ') {
+        event.preventDefault();
+        select(+el.dataset.rank, true);
+      }
+    });
+  });
+  if (focusedRank) list.querySelector(`[data-rank="${focusedRank}"]`)?.focus({ preventScroll: true });
 }
 
 /* Zoom to a pair and open its popup. */
@@ -442,7 +462,7 @@ document.getElementById('legend').innerHTML = `
   <div class="row" style="margin-top:8px"><span class="dot" style="background:${COLORS.needs_check};width:14px;height:14px;flex:0 0 14px"></span> Hotspot: number of overlapping pairs there</div>
   <div class="row" style="margin-top:8px"><span class="swatch" style="border-top-color:${COLORS.verified};border-top-width:5px"></span> Overlap, verified both sides</div>
   <div class="row"><span class="swatch" style="border-top-color:${COLORS.needs_check};border-top-style:dashed"></span> Overlap, needs checking</div>
-  <div class="row" style="margin-top:8px;color:var(--muted)"><span class="dot" style="background:var(--muted)"></span> Faded = project has no overlap</div>`;
+  <div class="row" style="margin-top:8px;color:var(--muted)"><span class="dot" style="background:var(--muted)"></span> Faded = no overlap matches current filters</div>`;
 
 /* ---- helpers ---- */
 function row(k, v, raw) {
@@ -458,6 +478,8 @@ function esc(s) {
 }
 
 /* ---- wire up and draw ---- */
+slider.max = DATA.maxMiles;
+slider.value = DATA.maxMiles;
 slider.addEventListener('input', applyFilters);
 onlyV.addEventListener('change', applyFilters);
 showAll.addEventListener('change', applyFilters);

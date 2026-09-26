@@ -186,11 +186,11 @@ def disambiguate(endpoint, state, feats, sibling):
     Returns None when there is nothing to choose between.
     """
     target = normalize(endpoint)
-    cands = [f for f in feats if f["norm"] == target]
+    cands = [f for f in feats if f["norm"] == target and f["state"] == state]
     if len(cands) < 2 or sibling is None:
         return None
     slat, slon = sibling
-    return min(cands, key=lambda f: (f["lat"] - slat) ** 2 + (f["lon"] - slon) ** 2)
+    return min(cands, key=lambda f: miles(f["lat"], f["lon"], slat, slon))
 
 
 def label_for(matches):
@@ -237,7 +237,8 @@ if __name__ == "__main__":
                 df.at[i, f"match_{end}"] = ""
                 continue
             prior = str(row[f"match_{end}"] or "")
-            keep = pd.notna(row[f"lat_{end}"]) and not (args.redo and prior != "preexisting")
+            keep = (pd.notna(row[f"lat_{end}"]) and pd.notna(row[f"lon_{end}"])
+                    and not (args.redo and prior != "preexisting"))
             if keep:
                 # Already located. Remember HOW, so re-running cannot downgrade the row.
                 how = prior if prior in SEVERITY else "preexisting"
