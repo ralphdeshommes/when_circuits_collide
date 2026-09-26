@@ -288,8 +288,8 @@ function render() {
   });
   if (document.getElementById('radii').checked) {      // optional: the 25-mile circle for every overlapping Dominion project
     DATA.projects.filter(p => inOv.has(p.id) && p.util.startsWith('Dominion')).forEach(p => {
-      const c = L.circle(p.c, {radius: 25 * 1609.34, color: COL.desc, weight: 1.2, dashArray: '4 6', fillColor: COL.desc, fillOpacity: .04, interactive: false}).addTo(layerOverlaps);
-      rings.push({kind: 'all', p: p, layer: c, base: {weight: 1.2, fillOpacity: .04}});
+      const c = L.circle(p.c, {radius: 25 * 1609.34, color: COL.desc, weight: 2, dashArray: '6 7', fillColor: COL.desc, fillOpacity: .04, interactive: false}).addTo(layerOverlaps);
+      rings.push({kind: 'all', p: p, layer: c, base: {weight: 2, fillOpacity: .04}});
     });
   }
   const nD = DATA.projects.filter(p => p.util.startsWith('Dominion') && p.c).length;
@@ -344,9 +344,9 @@ function drawSelection(o, fly) {
   map.getPane('overlaps').style.opacity = .28;        // fade everything else so the selection stands out
   // the overlap test, drawn: a 25-mile circle around the Dominion project's centre.
   // A Georgia Power project whose centre falls inside the circle is an overlap.
-  const ring = L.circle(a.c, {radius: 25 * 1609.34, color: COL.desc, weight: 2.5, dashArray: '8 7', fillColor: COL.desc, fillOpacity: .07, interactive: false}).addTo(layerSel);
+  const ring = L.circle(a.c, {radius: 25 * 1609.34, color: COL.desc, weight: 5, dashArray: '12 9', fillColor: COL.desc, fillOpacity: .07, interactive: false}).addTo(layerSel);
   rings = rings.filter(r => r.kind !== 'sel');
-  rings.push({kind: 'sel', p: a, layer: ring, base: {weight: 2.5, fillOpacity: .07}});
+  rings.push({kind: 'sel', p: a, layer: ring, base: {weight: 5, fillOpacity: .07}});
   // every Georgia Power project inside the same circle; each gets a numbered badge (1 = the selected pair)
   const inside = insideList(o);
   inside.forEach((x, i) => { const g = byId[x.b]; if (g && i > 0) drawProject(g, layerSel, {weight: 4, opacity: .95, pane: 'selected'}); });
@@ -491,7 +491,7 @@ function renderHover(hits) {
   hoverIds = key;
 
   rings.forEach(r => r.layer.setStyle(
-    hits.includes(r) ? {weight: 3, fillOpacity: .13} : r.base));
+    hits.includes(r) ? {weight: r.base.weight + 2, fillOpacity: .13} : r.base));
 
   const shared = sharedGeorgia(hits);
   const many = hits.length > 1;

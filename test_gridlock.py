@@ -357,7 +357,9 @@ try {
       out.hover_shown_multi = !box.hidden;
       out.hover_multi_class = box.classList.contains('two');
       out.hover_multi_text = box.textContent.replace(/\s+/g, ' ').trim().slice(0, 120);
-      out.hover_highlighted = rings.filter(r => r.layer.options.weight === 3).length;
+      out.hover_highlighted = rings.filter(r => r.layer.options.weight > r.base.weight).length;
+      out.hover_no_thinning = rings.every(r => r.layer.options.weight >= r.base.weight);
+      out.hover_weights = rings.map(r => [r.base.weight, r.layer.options.weight]);
       // every Georgia project the panel counts must really be in range of all hits
       const shared = sharedGeorgia(hits);
       out.hover_shared_ok = shared.every(g =>
@@ -517,6 +519,8 @@ def test_map():
           r.get("hover_multi_class"))
     check("panel names how many circles overlap",
           "overlap here" in (r.get("hover_multi_text") or ""), r.get("hover_multi_text"))
+    check("hover thickens each circle relative to its own weight, never thins it",
+          r.get("hover_no_thinning"), r.get("hover_weights"))
     check("every circle under the cursor is highlighted",
           r.get("hover_highlighted") == r.get("hover_hits_multi"),
           (r.get("hover_highlighted"), r.get("hover_hits_multi")))
