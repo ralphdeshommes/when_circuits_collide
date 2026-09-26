@@ -26,6 +26,7 @@ Run:  pip install pandas requests
 import argparse
 import difflib
 import json
+import math
 import os
 import re
 import time
@@ -38,18 +39,20 @@ OVERPASS_URL = "https://overpass-api.de/api/interpreter"
 # Overpass rejects the default python-requests User-Agent with 406 Not Acceptable
 HEADERS = {"User-Agent": "GridLock/1.0 (Sperry Tech hackathon project)"}
 CACHE = "osm_substations.json"
-CACHE_VERSION = 2                  # bumped when the query changes; old caches are refetched
+CACHE_VERSION = 3                  # bumped when the query changes; old caches are refetched
 REVIEW = "geocode_review.csv"
 STATES = {"GA": "US-GA", "SC": "US-SC"}
 FUZZY_CUTOFF = 0.88                # how similar a name must be to auto-accept
 RETRIES = 4                        # Overpass returns a transient 504 fairly often
+CROSS_BORDER_MI = 50               # how close a cross-state match must sit to the other endpoint
 
 OPERATORS = {  # operator tags that count as "the right company" per state
     "SC": ["dominion", "sce&g", "south carolina electric", "desc"],
     "GA": ["georgia power", "southern company", "georgia transmission", "meag",
            "savannah electric", "dalton"],
 }
-FILLER = r"\b(SUB|SUBSTATION|SS|TS|DS|SWITCHING STATION|SWITCHYARD|PRIMARY|TIE|JCT|JUNCTION|TAP|PLANT|DAM|#\d+)\b"
+FILLER = r"\b(SUB|SUBSTATION|SS|TS|DS|SWITCHING STATION|SWITCHYARD|PRIMARY|TIE|JCT|JUNCTION|TAP|PLANT|DAM)\b"
+UNIT = r"#\s*\d+"                 # 'THURMOND DAM #6' -> 'THURMOND'; \b cannot match before '#'
 
 # How trustworthy each way of locating an endpoint is, worst first. A project's
 # location_confidence is the WEAKEST of its located endpoints.
@@ -59,8 +62,10 @@ VERIFIED = ("sponsor_verified", "manually_verified")
 
 def normalize(name):
     """'Stevens Creek Sub' and 'STEVENS CREEK' both become 'STEVENS CREEK'."""
-    s = str(name).upper().replace("ST.", "SAINT").replace("FT ", "FORT ")
+    s = str(name).upper().replace("ST.", "SAINT")
     s = re.sub(r"\bST\b", "SAINT", s)      # 'St George' == 'Saint George Substation'
+    s = re.sub(r"\bFT\b", "FORT", s)       # word boundary: 'Kraft' is not 'Kraport'
+    s = re.sub(UNIT, " ", s)
     s = re.sub(FILLER, " ", s)
     s = re.sub(r"\(.*?\)|[^A-Z0-9 ]", " ", s)
     return " ".join(s.split())
@@ -115,26 +120,77 @@ def download_osm():
     return feats
 
 
+def miles(lat1, lon1, lat2, lon2):
+    r = 3958.8
+    p1, p2 = math.radians(lat1), math.radians(lat2)
+    dp, dl = math.radians(lat2 - lat1), math.radians(lon2 - lon1)
+    a = math.sin(dp / 2) ** 2 + math.cos(p1) * math.cos(p2) * math.sin(dl / 2) ** 2
+    return 2 * r * math.asin(math.sqrt(a))
+
+
 def best_match(endpoint, state, feats):
     target = normalize(endpoint)
     if not target:
         return None, "not_found"
-    # HARD GATE: only ever consider features inside the project's own state.
+    # Only ever consider the project's own state here. Cross-border endpoints are
+    # real, but they are handled by cross_border_match() below, which demands
+    # corroboration -- otherwise SC's Summerville silently becomes Georgia's.
     in_state = [f for f in feats if f["state"] == state]
-    right_op = [f for f in in_state if any(o in f["operator"].lower() for o in OPERATORS[state])]
+    groups = [[f for f in in_state if any(o in f["operator"].lower() for o in OPERATORS[state])],
+              in_state]
 
-    for group in (right_op, in_state):                   # right company first, then anyone
+    for group in groups:
         exact = [f for f in group if f["norm"] == target]
         if len(exact) == 1:
             return exact[0], "auto_exact"
         if len(exact) > 1:                               # same name in several places
             return exact[0], "auto_ambiguous"
-    for group in (right_op, in_state):
+    for group in groups:
         names = [f["norm"] for f in group]
         close = difflib.get_close_matches(target, names, n=1, cutoff=FUZZY_CUTOFF)
         if close:
             return group[names.index(close[0])], "auto_fuzzy"
     return None, "not_found"
+
+
+def cross_border_match(endpoint, state, feats, sibling):
+    """
+    A Georgia Power line really can end at Thurmond Dam SC, so an out-of-state
+    match is allowed -- but only when the project's OTHER endpoint vouches for it
+    by sitting within CROSS_BORDER_MI. Without that corroboration a name like
+    'Summerville' matches the wrong state's substation 250 miles away.
+    """
+    target = normalize(endpoint)
+    if not target or sibling is None:
+        return None, "not_found"
+    slat, slon = sibling
+    near = [f for f in feats
+            if f["state"] != state and miles(f["lat"], f["lon"], slat, slon) <= CROSS_BORDER_MI]
+    exact = [f for f in near if f["norm"] == target]
+    if len(exact) == 1:
+        return exact[0], "auto_exact"
+    if len(exact) > 1:
+        return min(exact, key=lambda f: miles(f["lat"], f["lon"], slat, slon)), "auto_exact"
+    names = [f["norm"] for f in near]
+    close = difflib.get_close_matches(target, names, n=1, cutoff=FUZZY_CUTOFF)
+    if close:
+        return near[names.index(close[0])], "auto_fuzzy"
+    return None, "not_found"
+
+
+def disambiguate(endpoint, state, feats, sibling):
+    """
+    When a name matches several substations, prefer the one nearest the project's
+    OTHER endpoint. A transmission line joins two nearby stations, so 'GOSHEN' on
+    a line to KRAFT (Savannah) is the Savannah Goshen, not the Augusta one.
+    Returns None when there is nothing to choose between.
+    """
+    target = normalize(endpoint)
+    cands = [f for f in feats if f["norm"] == target]
+    if len(cands) < 2 or sibling is None:
+        return None
+    slat, slon = sibling
+    return min(cands, key=lambda f: (f["lat"] - slat) ** 2 + (f["lon"] - slon) ** 2)
 
 
 def label_for(matches):
@@ -197,11 +253,74 @@ if __name__ == "__main__":
                 "matched_osm_name": feat["name"] if feat else "", "how": how,
                 "lat": feat["lat"] if feat else "", "lon": feat["lon"] if feat else "",
                 "operator": feat["operator"] if feat else "",
+                "matched_state": feat["state"] if feat else "",
                 "osm_link": f"https://www.openstreetmap.org/{feat['osm']}" if feat else "",
                 "checked_on": datetime.now().strftime("%Y-%m-%d %H:%M"),
             }
             if feat:
                 df.at[i, f"lat_{end}"], df.at[i, f"lon_{end}"] = feat["lat"], feat["lon"]
+            else:
+                # --redo re-matched this endpoint and failed. Drop the old coordinates:
+                # keeping them would leave a rejected match silently feeding overlaps.py.
+                df.at[i, f"lat_{end}"], df.at[i, f"lon_{end}"] = pd.NA, pd.NA
+        if matches:
+            df.at[i, "location_confidence"] = label_for(matches)
+
+    # Second pass: retry endpoints we could not find in their own state, allowing a
+    # cross-border match only where the sibling endpoint corroborates it.
+    for i, row in df.iterrows():
+        if row["location_confidence"] in VERIFIED:
+            continue
+        for end, other in (("a", "b"), ("b", "a")):
+            if df.at[i, f"match_{end}"] != "not_found":
+                continue
+            olat, olon = df.at[i, f"lat_{other}"], df.at[i, f"lon_{other}"]
+            if pd.isna(olat) or pd.isna(olon):
+                continue
+            feat, how = cross_border_match(row[f"name_{end}"], row["state"], feats, (olat, olon))
+            if feat is None:
+                continue
+            df.at[i, f"lat_{end}"], df.at[i, f"lon_{end}"] = feat["lat"], feat["lon"]
+            df.at[i, f"match_{end}"] = how
+            print(f"  {row.project_id} {end}: '{row[f'name_{end}']}' -> {feat['name']} "
+                  f"({feat['state']}, {miles(feat['lat'], feat['lon'], olat, olon):.1f} mi from endpoint {other})")
+            review[(row.project_id, end)] = {
+                "project_id": row.project_id, "endpoint": end, "looked_for": row[f"name_{end}"],
+                "matched_osm_name": feat["name"], "how": how, "lat": feat["lat"], "lon": feat["lon"],
+                "operator": feat["operator"], "matched_state": feat["state"],
+                "osm_link": f"https://www.openstreetmap.org/{feat['osm']}",
+                "checked_on": datetime.now().strftime("%Y-%m-%d %H:%M")}
+        matches = [df.at[i, f"match_{e}"] for e in ("a", "b") if df.at[i, f"match_{e}"]]
+        if matches:
+            df.at[i, "location_confidence"] = label_for(matches)
+
+    # Third pass: resolve auto_ambiguous endpoints using the sibling endpoint's
+    # location, now that every endpoint that could be matched has been.
+    for i, row in df.iterrows():
+        if row["location_confidence"] in VERIFIED:
+            continue
+        for end, other in (("a", "b"), ("b", "a")):
+            if df.at[i, f"match_{end}"] != "auto_ambiguous":
+                continue
+            olat, olon = df.at[i, f"lat_{other}"], df.at[i, f"lon_{other}"]
+            if pd.isna(olat) or pd.isna(olon):
+                continue
+            feat = disambiguate(row[f"name_{end}"], row["state"], feats, (olat, olon))
+            if feat is None or (feat["lat"] == df.at[i, f"lat_{end}"]
+                                and feat["lon"] == df.at[i, f"lon_{end}"]):
+                continue
+            df.at[i, f"lat_{end}"], df.at[i, f"lon_{end}"] = feat["lat"], feat["lon"]
+            df.at[i, f"match_{end}"] = "auto_exact"
+            print(f"  {row.project_id} {end}: '{row[f'name_{end}']}' -> {feat['name']} "
+                  f"({feat['lat']:.4f},{feat['lon']:.4f}), nearest to endpoint {other}")
+            key = (row.project_id, end)
+            if key in review:
+                review[key].update({
+                    "matched_osm_name": feat["name"], "how": "auto_exact",
+                    "lat": feat["lat"], "lon": feat["lon"], "operator": feat["operator"],
+                    "matched_state": feat["state"],
+                    "osm_link": f"https://www.openstreetmap.org/{feat['osm']}"})
+        matches = [df.at[i, f"match_{e}"] for e in ("a", "b") if df.at[i, f"match_{e}"]]
         if matches:
             df.at[i, "location_confidence"] = label_for(matches)
 
