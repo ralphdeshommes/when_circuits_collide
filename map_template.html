@@ -83,6 +83,17 @@
   .est-caveat { font-size: 10.5px; line-height: 1.35; color: var(--muted);
                 margin-top: 5px; padding-top: 5px; border-top: 1px solid #cfe8d8; }
 
+  /* ---- hotspot circles: one per cluster of overlapping pairs ---- */
+  .hotspot { display: flex; align-items: center; justify-content: center;
+             border-radius: 50%; font-weight: 700; color: #fff; cursor: pointer;
+             box-shadow: 0 2px 8px rgba(0,0,0,.28); border: 2px solid #fff; }
+  .hotspot.verified { background: rgba(15,157,88,.88); }
+  .hotspot.mixed    { background: rgba(224,168,0,.90); }
+  .hotspot.open     { background: rgba(255,255,255,.75); color: var(--ink);
+                      border-style: dashed; border-color: var(--muted); box-shadow: none; }
+  .hotspot .n { line-height: 1; }
+  .hotspot .u { font-size: 8.5px; font-weight: 600; opacity: .85; letter-spacing: .3px; }
+
   /* ---- map ---- */
   #map { flex: 1; height: 100%; }
   .leaflet-popup-content { margin: 12px 14px; font-size: 13px; line-height: 1.5; }
@@ -119,6 +130,10 @@
     <div class="toggle">
       <input type="checkbox" id="onlyVerified">
       <label for="onlyVerified" style="margin:0;color:var(--ink)">Only pairs verified on both sides</label>
+    </div>
+    <div class="toggle">
+      <input type="checkbox" id="showAll">
+      <label for="showAll" style="margin:0;color:var(--ink)">Show every pair line at once</label>
     </div>
   </div>
 
@@ -260,6 +275,72 @@ function estimateBlock(o) {
 }
 
 /* ============================================================================
+   HOTSPOTS  - the default way to read the map. Drawing all 37 pair lines at
+   state zoom produces an unreadable knot around Savannah, so instead each
+   geographic cluster of pairs becomes one circle, sized by how many pairs it
+   holds. Clicking a circle expands that cluster into its individual lines.
+   ========================================================================= */
+const hotspots = L.layerGroup().addTo(map);
+const revealed = new Set();     // cluster ids currently expanded into lines
+
+function clusterSummary(shown) {
+  const by = {};
+  shown.forEach(o => (by[o.cluster] = by[o.cluster] || []).push(o));
+  return Object.entries(by).map(([cid, pairs]) => {
+    // centre the circle on the mean midpoint of the pairs it represents
+    const mids = pairs.map(o => [(o.a_center[0] + o.b_center[0]) / 2,
+                                 (o.a_center[1] + o.b_center[1]) / 2]);
+    const lat = mids.reduce((s, m) => s + m[0], 0) / mids.length;
+    const lon = mids.reduce((s, m) => s + m[1], 0) / mids.length;
+    const projects = new Set();
+    pairs.forEach(o => { projects.add(o.a_id); projects.add(o.b_id); });
+    const verified = pairs.filter(o => o.confidence === 'verified').length;
+    return { cid: +cid, pairs, at: [lat, lon], projects: projects.size,
+             verified, best: pairs.reduce((a, b) => a.score > b.score ? a : b) };
+  });
+}
+
+function drawHotspots(shown) {
+  hotspots.clearLayers();
+  if (showAll.checked) return;                 // lines replace the circles entirely
+  const groups = clusterSummary(shown);
+  const biggest = Math.max(...groups.map(g => g.pairs.length), 1);
+
+  groups.forEach(g => {
+    const open = revealed.has(g.cid);
+    const n = g.pairs.length;
+    const d = Math.round(30 + 30 * Math.sqrt(n / biggest));   // area ~ pair count
+    const kind = open ? 'open' : (g.verified === n ? 'verified' : 'mixed');
+    const icon = L.divIcon({
+      className: '',
+      iconSize: [d, d], iconAnchor: [d / 2, d / 2],
+      html: `<div class="hotspot ${kind}" style="width:${d}px;height:${d}px;font-size:${Math.round(d / 3)}px">
+               <div><div class="n">${n}</div><div class="u">PAIRS</div></div></div>`
+    });
+    const m = L.marker(g.at, { icon, pane: 'overlaps' });
+    m.bindPopup(hotspotPopup(g, open));
+    m.on('click', () => {
+      // expand this cluster into its individual pair lines, or collapse it again
+      revealed.has(g.cid) ? revealed.delete(g.cid) : revealed.add(g.cid);
+      if (revealed.has(g.cid)) {
+        const pts = g.pairs.flatMap(o => [o.a_center, o.b_center]);
+        map.fitBounds(L.latLngBounds(pts).pad(0.25), { maxZoom: 11, animate: false });
+      }
+      applyFilters();
+    });
+    hotspots.addLayer(m);
+  });
+}
+
+function hotspotPopup(g, open) {
+  return `<div class="pop-title">${g.pairs.length} overlapping pairs here</div>
+    ${row('Projects', g.projects + ' involved')}
+    ${row('Verified', g.verified + ' of ' + g.pairs.length + ' pairs')}
+    ${row('Best pair', '#' + g.best.rank + ' &middot; ' + g.best.miles.toFixed(2) + ' mi &middot; score ' + g.best.score.toFixed(3), true)}
+    <div class="pop-src">Click the circle to ${open ? 'collapse' : 'expand'} these pairs into individual lines.</div>`;
+}
+
+/* ============================================================================
    FILTERS  - the distance slider and the verified-only toggle. Both decide
    which pairs are visible; a project is only drawn at full strength if it
    still takes part in a visible pair.
@@ -267,6 +348,7 @@ function estimateBlock(o) {
 const slider = document.getElementById('miles');
 const miOut  = document.getElementById('miOut');
 const onlyV  = document.getElementById('onlyVerified');
+const showAll = document.getElementById('showAll');
 let selected = null;
 
 function visibleOverlaps() {
@@ -281,13 +363,21 @@ function applyFilters() {
   const live = new Set();                      // projects still in a visible pair
   shown.forEach(o => { live.add(o.a_id); live.add(o.b_id); });
 
-  // show/hide the overlap lines
+  // Which pairs actually get a line drawn. By default only the clusters the
+  // user has expanded, plus whichever single pair is selected in the sidebar.
+  const drawn = new Set(
+    (showAll.checked ? shown
+                     : shown.filter(o => revealed.has(o.cluster) || o.rank === selected))
+      .map(o => o.rank));
+
   DATA.overlaps.forEach(o => {
-    const on = shown.includes(o);
     const layer = overlapLayers[o.rank];
+    const on = drawn.has(o.rank);
     if (on && !map.hasLayer(layer)) layer.addTo(map);
     if (!on && map.hasLayer(layer)) map.removeLayer(layer);
   });
+
+  drawHotspots(shown);
 
   // fade the projects that are not involved
   DATA.projects.forEach(p => {
@@ -332,14 +422,14 @@ function select(rank, fromList) {
   selected = rank;
   const o = DATA.overlaps.find(x => x.rank === rank);
   const layer = overlapLayers[rank];
-  if (!map.hasLayer(layer)) layer.addTo(map);      // reveal it even if filtered out
+  if (!map.hasLayer(layer)) layer.addTo(map);      // reveal it even if its cluster is collapsed
   // animate:false makes this jump straight to the pair. Leaflet's animated
   // fit depends on a transitionend event that does not always fire, which
   // left the map sitting at the default zoom; an instant jump always lands.
   map.fitBounds(L.latLngBounds([o.a_center, o.b_center]).pad(0.6),
                 { maxZoom: 12, animate: false });
   if (fromList) layer.openPopup();
-  renderList(visibleOverlaps());
+  applyFilters();
 }
 
 /* ============================================================================
@@ -349,6 +439,7 @@ document.getElementById('legend').innerHTML = `
   <div class="row"><span class="swatch" style="border-top-color:${COLORS.DESC}"></span> Dominion Energy South Carolina</div>
   <div class="row"><span class="swatch" style="border-top-color:${COLORS.GPC}"></span> Georgia Power</div>
   <div class="row"><span class="swatch" style="border-top-color:${COLORS.ITS}"></span> Georgia ITS partners (GTC, MEAG, Dalton)</div>
+  <div class="row" style="margin-top:8px"><span class="dot" style="background:${COLORS.needs_check};width:14px;height:14px;flex:0 0 14px"></span> Hotspot: number of overlapping pairs there</div>
   <div class="row" style="margin-top:8px"><span class="swatch" style="border-top-color:${COLORS.verified};border-top-width:5px"></span> Overlap, verified both sides</div>
   <div class="row"><span class="swatch" style="border-top-color:${COLORS.needs_check};border-top-style:dashed"></span> Overlap, needs checking</div>
   <div class="row" style="margin-top:8px;color:var(--muted)"><span class="dot" style="background:var(--muted)"></span> Faded = project has no overlap</div>`;
@@ -369,6 +460,7 @@ function esc(s) {
 /* ---- wire up and draw ---- */
 slider.addEventListener('input', applyFilters);
 onlyV.addEventListener('change', applyFilters);
+showAll.addEventListener('change', applyFilters);
 applyFilters();
 </script>
 </body>

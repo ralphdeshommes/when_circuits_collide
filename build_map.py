@@ -15,6 +15,7 @@ Run:  python build_map.py
 """
 
 import json
+import math
 
 import pandas as pd
 
@@ -53,6 +54,9 @@ OUT = "gridlock_map.html"
 MAP_CENTER = [33.0, -81.5]
 MAP_ZOOM = 8
 
+# Pairs whose midpoints are within this many miles form one hotspot circle.
+CLUSTER_MI = 25
+
 # One colour per utility. The Georgia list also carries Georgia Power's ITS
 # partners (GTC, MEAG, Dalton), which are a third group rather than a fourth,
 # fifth and sixth colour.
@@ -63,6 +67,55 @@ def utility_group(utility):
     if u == "Georgia Power":
         return "GPC"
     return "ITS"
+
+
+def miles(lat1, lon1, lat2, lon2):
+    r = 3958.8
+    p1, p2 = math.radians(lat1), math.radians(lat2)
+    dp, dl = math.radians(lat2 - lat1), math.radians(lon2 - lon1)
+    a = math.sin(dp / 2) ** 2 + math.cos(p1) * math.cos(p2) * math.sin(dl / 2) ** 2
+    return 2 * r * math.asin(math.sqrt(a))
+
+
+def cluster_overlaps(overlaps, threshold_mi=CLUSTER_MI):
+    """
+    Group overlapping pairs into geographic hotspots.
+
+    Drawing all 37 pairs as centre-to-centre lines produces a knot around
+    Savannah that cannot be read at state zoom. Instead we cluster the pairs by
+    the midpoint of each pair and let the map show one circle per cluster, sized
+    by how many pairs it holds.
+
+    Single-linkage: two pairs join the same cluster if their midpoints are within
+    threshold_mi of each other, and clusters merge transitively. That matches how
+    the eye groups them -- a corridor of nearby work becomes one hotspot.
+    """
+    mids = [((o["a_center"][0] + o["b_center"][0]) / 2,
+             (o["a_center"][1] + o["b_center"][1]) / 2) for o in overlaps]
+
+    parent = list(range(len(overlaps)))          # union-find
+    def find(i):
+        while parent[i] != i:
+            parent[i] = parent[parent[i]]
+            i = parent[i]
+        return i
+    def union(i, j):
+        parent[find(i)] = find(j)
+
+    for i in range(len(overlaps)):
+        for j in range(i + 1, len(overlaps)):
+            if miles(*mids[i], *mids[j]) <= threshold_mi:
+                union(i, j)
+
+    # number clusters by size, largest first, so cluster 0 is the main hotspot
+    groups = {}
+    for i in range(len(overlaps)):
+        groups.setdefault(find(i), []).append(i)
+    order = sorted(groups.values(), key=len, reverse=True)
+    for cid, members in enumerate(order):
+        for i in members:
+            overlaps[i]["cluster"] = cid
+    return len(order)
 
 
 def clean(value):
@@ -136,6 +189,7 @@ if __name__ == "__main__":
     projects = build_projects(projects_df)
     centers = {p["id"]: p["center"] for p in projects}
     overlaps = build_overlaps(overlaps_df, centers)
+    n_clusters = cluster_overlaps(overlaps)
 
     # The slider can only filter pairs that overlaps.py already found, and it
     # only kept pairs under its 25 mi rule -- so that is the top of the range.
@@ -143,13 +197,18 @@ if __name__ == "__main__":
 
     payload = json.dumps({"projects": projects, "overlaps": overlaps,
                           "center": MAP_CENTER, "zoom": MAP_ZOOM,
-                          "maxMiles": 25}, allow_nan=False)
+                          "maxMiles": 25, "clusters": n_clusters}, allow_nan=False)
     # A literal </script> inside the JSON would close the tag early.
     payload = payload.replace("</", "<\\/")
 
     html = open("map_template.html").read().replace("/*__DATA__*/", payload)
     open(OUT, "w").write(html)
 
+    sizes = {}
+    for o in overlaps:
+        sizes[o["cluster"]] = sizes.get(o["cluster"], 0) + 1
+    print(f"{n_clusters} hotspot cluster(s): " +
+          ", ".join(f"{n} pairs" for _, n in sorted(sizes.items())))
     costed = sum(1 for o in overlaps if o["estimate"])
     print(f"{costed} pair(s) carry a coordination estimate")
     verified = sum(1 for o in overlaps if o["confidence"] == "verified")
