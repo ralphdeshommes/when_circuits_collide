@@ -325,6 +325,9 @@ try {
       out.hover_shared_ok = shared.every(g =>
         hits.every(r => map.distance(L.latLng(g.c), L.latLng(r.p.c)) <= RADIUS_MI * MILE_M));
       out.hover_shared_n = shared.length;
+      // cost block: spend must be the sum of the hovered projects' own costs
+      out.hover_spend_sum = hits.map(r => r.p.cost).filter(c => c).reduce((s, c) => s + c, 0);
+      out.hover_costs_present = hits.filter(r => r.p.cost).length;
     }
     // a point inside exactly one circle
     let solo = null;
@@ -336,6 +339,25 @@ try {
       renderHover(ringsUnder(solo));
       out.hover_solo_text = box.textContent.replace(/\s+/g, ' ').trim().slice(0, 60);
       out.hover_solo_class = box.classList.contains('two');
+    }
+    // a circle that owns an overlap carrying an estimate must quote it
+    const withEst = DATA.overlaps.find(o => o.lo != null && o.lo > 0);
+    const ringEst = withEst && rings.find(r => r.p.id === withEst.a);
+    if (ringEst) {
+      renderHover([ringEst]);
+      const t = box.textContent.replace(/\s+/g, ' ').trim();
+      out.hover_cost_text = t;
+      out.hover_quotes_saving = t.includes('rough saving if coordinated');
+      out.hover_quotes_overlap_id = t.includes(withEst.id);
+      out.hover_quotes_spend = t.includes('planned Dominion spend');
+      out.hover_est_lo = withEst.lo; out.hover_est_hi = withEst.hi;
+      out.hover_proj_cost = ringEst.p.cost;
+    }
+    // a circle with no estimated overlap must say so rather than show nothing
+    const ringNo = rings.find(r => !visible.some(o => o.a === r.p.id && o.lo != null && o.lo > 0));
+    if (ringNo) {
+      renderHover([ringNo]);
+      out.hover_noest_text = box.textContent.replace(/\s+/g, ' ').trim();
     }
     clearHover();
     out.hover_hidden_after = box.hidden;
@@ -437,6 +459,25 @@ def test_map():
               r.get("hover_solo_text"))
     else:
         skip("single-circle hover wording", "no point found inside exactly one circle")
+    # Cost on hover. Two separate figures: published Dominion spend, and the
+    # saving from the best-ranked overlap. They must never be added together.
+    check("hover panel states the planned Dominion spend", r.get("hover_quotes_spend"))
+    check("hover panel quotes a coordination saving where one exists",
+          r.get("hover_quotes_saving"), r.get("hover_cost_text"))
+    check("the saving names the overlap it came from", r.get("hover_quotes_overlap_id"))
+    check("spend shown is the sum of the hovered projects' own costs",
+          r.get("hover_spend_sum", 0) > 0 and r.get("hover_costs_present", 0) > 0,
+          (r.get("hover_spend_sum"), r.get("hover_costs_present")))
+    check("spend and saving are different figures, not one added to the other",
+          r.get("hover_proj_cost", 0) > r.get("hover_est_hi", 0),
+          (r.get("hover_proj_cost"), r.get("hover_est_hi")))
+    if r.get("hover_noest_text"):
+        check("a circle with no estimate says so rather than showing nothing",
+              "no cost saving estimated" in r["hover_noest_text"]
+              or "rough saving" in r["hover_noest_text"],
+              r["hover_noest_text"][:90])
+    else:
+        skip("no-estimate hover wording", "every circle owns an estimated overlap")
     check("leaving the circles hides the panel", r.get("hover_hidden_after"))
     check("leaving the circles restores the circle styling",
           r.get("hover_styles_restored"))

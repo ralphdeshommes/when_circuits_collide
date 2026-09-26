@@ -59,6 +59,7 @@
   #hoverinfo .hid { font-weight: 700; }
   #hoverinfo .hsplit { margin-top: 8px; padding-top: 7px; border-top: 1px solid var(--line); }
   #hoverinfo .hcount { font-size: 15px; font-weight: 700; }
+  #hoverinfo .hcost { font-size: 13px; font-weight: 700; }
   #hoverinfo.two { border-color: #c9a227; box-shadow: 0 4px 16px rgba(201,162,39,.22); }
 
   #detail { position: absolute; right: 14px; bottom: 26px; width: 390px; max-width: calc(100% - 28px); max-height: 56%; overflow-y: auto; z-index: 800;
@@ -460,8 +461,35 @@ function renderHover(hits) {
          <span class="hs">Georgia Power project${shared.length === 1 ? '' : 's'} ${many ? 'inside all of them' : 'inside'}</span></div>`
     + (many && shared.length
         ? `<div class="hrow">${shared.slice(0, 4).map(g => esc(g.id)).join(', ')}${shared.length > 4 ? ' +' + (shared.length - 4) + ' more' : ''}</div>`
-        : '');
+        : '')
+    + costBlock(hits);
   hoverBox.hidden = false;
+}
+
+// Cost for the hovered circles. Two separate figures, deliberately not added
+// together: the published Dominion spend, and the coordination saving from the
+// best-ranked overlap these projects take part in. Summing savings across pairs
+// would double-count the same project, so the best single pair is quoted.
+// Georgia Power's own costs are redacted in the public IRP, so the spend figure
+// is the Dominion side only.
+function costBlock(hits) {
+  const ids = new Set(hits.map(r => r.p.id));
+  const costs = hits.map(r => r.p.cost).filter(c => c);
+  const spend = costs.reduce((s, c) => s + c, 0);
+  const est = visible.filter(o => ids.has(o.a) && o.lo != null && o.lo > 0)
+                     .sort((x, y) => y.rscore - x.rscore)[0];
+  if (!costs.length && !est) return '';
+  return `<div class="hsplit">`
+    + (costs.length
+        ? `<div class="hrow"><span class="hcost">${money(spend)}</span>
+             <span class="hs">planned Dominion spend${costs.length < hits.length
+               ? ' (' + costs.length + ' of ' + hits.length + ' published)' : ''}</span></div>`
+        : '')
+    + (est
+        ? `<div class="hrow"><b>${money(est.lo)} &ndash; ${money(est.hi)}</b>
+             <span class="hs">rough saving if coordinated &middot; ${esc(est.id)}</span></div>`
+        : `<div class="hrow hs">no cost saving estimated for these overlaps</div>`)
+    + `</div>`;
 }
 
 let hoverQueued = false;
