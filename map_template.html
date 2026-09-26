@@ -70,7 +70,8 @@
   .leaflet-tooltip.tip-gpc { color: var(--gpc); border-color: var(--gpc); }
   .num { display: inline-block; box-sizing: border-box; width: 24px; height: 24px; line-height: 20px; text-align: center; border-radius: 50%; background: var(--gpc); color: #fff;
     font-weight: 800; font-size: 12px; border: 2px solid #fff; box-shadow: 0 1px 4px rgba(0,0,0,.45); vertical-align: middle; margin-right: 5px; }
-  .num.dom { background: var(--desc); }
+  .num.dom { background: var(--desc); border-radius: 4px; }        /* Dominion = square, Georgia Power = circle */
+  .numchip.dom { background: var(--desc); border-radius: 4px; }
   .num.sel { box-shadow: 0 0 0 3px rgba(196,35,45,.7), 0 1px 4px rgba(0,0,0,.45); }
   .leaflet-marker-icon .num { margin: 0; }
   .numchip { display: inline-block; min-width: 17px; padding: 0 5px; text-align: center; border-radius: 9px; background: var(--gpc); color: #fff; font-weight: 700; font-size: 11px; }
@@ -98,14 +99,33 @@
         <div class="kpi"><b id="k-pct">-</b><span>of Dominion projects</span></div>
       </div>
       <div class="legend">
+        <div style="flex-basis:100%">
+          <svg viewBox="0 0 380 78" style="display:block;width:100%;max-width:380px" role="img" aria-label="Key: two substations joined by a line make one project; a project with one location is a single shape with no line">
+            <text x="105" y="14" text-anchor="middle" font-size="11" font-weight="600" fill="#1b2430">project = the power line</text>
+            <line x1="35" y1="34" x2="175" y2="34" stroke="#111" stroke-width="4"/>
+            <circle cx="35" cy="34" r="7" fill="#111" stroke="#fff" stroke-width="2"/>
+            <circle cx="175" cy="34" r="7" fill="#111" stroke="#fff" stroke-width="2"/>
+            <text x="35" y="58" text-anchor="middle" font-size="11" font-weight="600" fill="#111">substation</text>
+            <text x="175" y="58" text-anchor="middle" font-size="11" font-weight="600" fill="#111">substation</text>
+            <line x1="228" y1="8" x2="228" y2="70" stroke="#dfe3e8"/>
+            <text x="300" y="14" text-anchor="middle" font-size="11" font-weight="600" fill="#1b2430">single location</text>
+            <rect x="268" y="27" width="14" height="14" rx="2" fill="#1f5fbf" stroke="#fff" stroke-width="2"/>
+            <circle cx="316" cy="34" r="8" fill="#c95f00" stroke="#fff" stroke-width="2"/>
+            <text x="300" y="58" text-anchor="middle" font-size="10.5" fill="#5d6a7a">a project at one place,</text>
+            <text x="300" y="71" text-anchor="middle" font-size="10.5" fill="#5d6a7a">no line</text>
+          </svg>
+        </div>
         <span><svg width="40" height="14" viewBox="0 0 40 14" aria-hidden="true"><line x1="6" y1="7" x2="34" y2="7" stroke="#1f5fbf" stroke-width="3.5"/><circle cx="6" cy="7" r="5" fill="#1f5fbf" stroke="#fff" stroke-width="1.5"/><circle cx="34" cy="7" r="5" fill="#1f5fbf" stroke="#fff" stroke-width="1.5"/></svg>Dominion project</span>
         <span><svg width="40" height="14" viewBox="0 0 40 14" aria-hidden="true"><line x1="6" y1="7" x2="34" y2="7" stroke="#c95f00" stroke-width="3.5"/><circle cx="6" cy="7" r="5" fill="#c95f00" stroke="#fff" stroke-width="1.5"/><circle cx="34" cy="7" r="5" fill="#c95f00" stroke="#fff" stroke-width="1.5"/></svg>Georgia Power project</span>
-        <span><span class="num dom" style="width:18px;height:18px;line-height:14px;font-size:10px">D</span>Dominion centre</span>
-        <span><span class="num" style="width:18px;height:18px;line-height:14px;font-size:10px">1</span>Georgia Power centre</span>
+        <span><svg width="34" height="14" viewBox="0 0 34 14" aria-hidden="true"><rect x="2" y="1" width="12" height="12" rx="2" fill="#1f5fbf" stroke="#fff" stroke-width="1.5"/><circle cx="26" cy="7" r="6" fill="#c95f00" stroke="#fff" stroke-width="1.5"/></svg>single location: square = Dominion, circle = Georgia Power</span>
+        <span><svg width="34" height="14" viewBox="0 0 34 14" aria-hidden="true"><rect x="2" y="1" width="12" height="12" rx="2" fill="#fff" stroke="#1f5fbf" stroke-width="2"/><circle cx="26" cy="7" r="6" fill="#fff" stroke="#c95f00" stroke-width="2"/></svg>hollow = overlaps nothing</span>
+        <span><span class="num dom" style="width:18px;height:18px;line-height:14px;font-size:10px">D</span>Dominion project's centre (midpoint of its line)</span>
+        <span><span class="num sel" style="width:18px;height:18px;line-height:14px;font-size:10px">G</span>Georgia Power project's centre (midpoint of its line)</span>
+        <span><span class="num" style="width:18px;height:18px;line-height:14px;font-size:10px;margin-right:2px">1</span><span class="num dom" style="width:18px;height:18px;line-height:14px;font-size:10px">1</span>numbers = the other company's projects inside the circle</span>
         <span><i class="ring"></i>25-mile radius</span>
         <span><i style="border-color:var(--ovl)"></i>centre-to-centre distance</span>
       </div>
-      <div class="sub" style="margin-top:6px">Each project is a straight line between its two substations (the two dots); a project with one substation is a single dot. Pick a card: the circle is 25 miles around the Dominion project's centre (D). The numbered orange badges are the Georgia Power projects inside it; the list in the detail card says which is which. Red glow = takes part in an overlap. Dotted = low-confidence location.</div>
+      <div class="sub" style="margin-top:6px">The dots are substations and the line between two of them is the project (drawn straight, not along the real route); a project with only one location found has no line and is a single, larger shape instead: a square for Dominion, a circle for Georgia Power (hollow if it overlaps nothing). Pick a card: the circle is 25 miles around the Dominion project's centre (D). The numbered orange badges are the Georgia Power projects inside it; the list in the detail card says which is which. You can also click any project on the map, Dominion or Georgia Power: it becomes the centre, and the other company's projects inside its circle are numbered. Red glow = takes part in an overlap. Dotted = low-confidence location.</div>
     </header>
     <section class="controls" aria-label="Filters">
       <div class="row"><label for="miles">Max distance</label><input id="miles" type="range" min="2" max="25" step="1" value="25"><output id="miles-out">25 mi</output></div>
@@ -151,11 +171,11 @@ map.createPane('selected').style.zIndex = 470;      // the selected pair sits ab
 const layerProjects = L.layerGroup().addTo(map);
 const layerOverlaps = L.layerGroup().addTo(map);
 const layerSel = L.layerGroup().addTo(map);
-let selected = null, visible = [], items = [];
+let selected = null, selectedProject = null, visible = [], items = [];
 
-function popup(p) {
+function popup(p, noTitle) {
   const ovs = DATA.overlaps.concat(DATA.partners).filter(o => o.a === p.id || o.b === p.id).map(o => o.id);
-  return `<div class="pop-t">${esc(p.name)}</div>
+  return `${noTitle ? '' : `<div class="pop-t">${esc(p.name)}</div>`}
     <div class="pop-m">${esc(p.util)}${p.sponsor && p.sponsor !== 'GPC' ? ' &middot; sponsor ' + esc(p.sponsor) : ''} &middot; ${esc(p.id)}</div>
     <div>In service: <b>${fmtDate(p.date)}</b>${p.status ? ' &middot; ' + esc(p.status) : ''}</div>
     ${p.cost ? `<div>Estimated cost: <b>${money(p.cost)}</b></div>` : ''}
@@ -164,9 +184,26 @@ function popup(p) {
     ${ovs.length ? `<div style="margin-top:4px">Overlaps: ${ovs.map(esc).join(', ')}</div>` : ''}`;
 }
 
+// A project with only one substation is a single shape (not two dots joined by a line): Dominion = square, Georgia Power = circle.
+// Solid = the project takes part in an overlap, hollow = it overlaps nothing, dashed outline = low-confidence location.
+function shapeIcon(shape, color, size, hollow, dashed) {
+  const fill = hollow ? '#fff' : color, fo = dashed && !hollow ? .45 : 1;
+  const ink = hollow || dashed ? color : '#fff', sw = hollow || dashed ? 2 : 1.5, dash = dashed ? ' stroke-dasharray="2 1.5"' : '';
+  const paint = `fill="${fill}" fill-opacity="${fo}" stroke="${ink}" stroke-width="${sw}"${dash}`;
+  const body = shape === 'square' ? `<rect x="3" y="3" width="10" height="10" rx="1.5" ${paint}/>` : `<circle cx="8" cy="8" r="5" ${paint}/>`;
+  return L.divIcon({className: '', html: `<svg width="${size}" height="${size}" viewBox="0 0 16 16" aria-hidden="true">${body}</svg>`,
+    iconSize: [size, size], iconAnchor: [size / 2, size / 2], popupAnchor: [0, -size / 2]});
+}
+
+function shapeMarker(latlng, shape, color, size, o, interactive) {
+  return L.marker(latlng, {pane: o.pane, icon: shapeIcon(shape, color, size, o.hollow, !!o.dashArray), opacity: o.hollow ? .75 : o.opacity,
+    interactive: !!interactive, keyboard: false});
+}
+
 function drawProject(p, group, opts) {
   if (!p.c) return;
-  const color = p.util.startsWith('Dominion') ? COL.desc : COL.gpc;
+  const isDom = p.util.startsWith('Dominion');
+  const color = isDom ? COL.desc : COL.gpc, shape = isDom ? 'square' : 'circle';
   const dash = p.conf === 'low' ? '2 6' : null;
   const o = Object.assign({pane: 'projects', color, weight: 3, opacity: .85, dashArray: dash}, opts || {});
   let layer;
@@ -177,15 +214,18 @@ function drawProject(p, group, opts) {
     else L.circleMarker([p.c[0], p.c[1]], Object.assign({radius: 13, weight: 1, fillColor: COL.ovl, fillOpacity: .22}, glow)).addTo(group);
   }
   if (isLine) {
-    layer = L.polyline([[p.a[0], p.a[1]], [p.b[0], p.b[1]]], o);
+    const ends = [[p.a[0], p.a[1]], [p.b[0], p.b[1]]];
+    L.polyline(ends, Object.assign({}, o, {interactive: false})).addTo(group);
+    layer = L.polyline(ends, {pane: o.pane, weight: 14, opacity: 0});      // wide invisible line: an easy click target, even for the thin faded lines
     // the two dots are the project's two substations; the line joins them
-    const dot = {pane: o.pane, radius: o.weight >= 5 ? 6 : 4, color: '#fff', weight: 1.5, fillColor: color, fillOpacity: 1, opacity: o.opacity};
+    const dot = {pane: o.pane, radius: o.weight >= 5 ? 6 : 4, color: '#fff', weight: 1.5, fillColor: color, fillOpacity: 1, opacity: o.opacity, interactive: false};
     L.circleMarker([p.a[0], p.a[1]], dot).addTo(group);
     L.circleMarker([p.b[0], p.b[1]], dot).addTo(group);
   } else {
-    layer = L.circleMarker([p.c[0], p.c[1]], Object.assign({radius: 6, fillColor: color, fillOpacity: o.opacity * .8}, o));
+    layer = shapeMarker([p.c[0], p.c[1]], shape, color, o.weight >= 5 ? 18 : o.hollow ? 11 : 14, o, true);   // one substation: a single, larger shape
   }
-  layer.bindPopup(popup(p)).bindTooltip((p.util.startsWith('Dominion') ? 'Dominion: ' : 'Georgia Power: ') + p.name, {sticky: true}).addTo(group);
+  // click a project: it becomes the centre of the 25-mile circle and the other company's projects are compared to it
+  layer.on('click', () => selectProject(p.id)).bindTooltip((p.util.startsWith('Dominion') ? 'Dominion: ' : 'Georgia Power: ') + p.name, {sticky: true}).addTo(group);
 }
 
 function filtered() {
@@ -247,7 +287,7 @@ function render() {
   DATA.projects.forEach(p => {
     if (!showPartners && p.util === 'Georgia Power' && !['GPC', 'SAV'].includes(p.sponsor)) return;
     if (inOv.has(p.id)) drawProject(p, layerOverlaps, {weight: 5, opacity: 1, pane: 'overlaps', halo: true});
-    else if (showAll) drawProject(p, layerProjects, {weight: 2, opacity: .35});
+    else if (showAll) drawProject(p, layerProjects, {weight: 2, opacity: .35, hollow: true});
   });
   if (document.getElementById('radii').checked) {      // optional: the 25-mile circle for every overlapping Dominion project
     DATA.projects.filter(p => inOv.has(p.id) && p.util.startsWith('Dominion')).forEach(p =>
@@ -264,6 +304,7 @@ function render() {
   const so = selected && visible.find(o => o.id === selected);
   if (so) { drawSelection(so, false); renderDetail(so, byId[so.a], byId[so.b]); }      // keep the selection when a filter changes
   else if (selected) { selected = null; document.getElementById('detail').style.display = 'none'; }
+  else if (selectedProject) selectProject(selectedProject, false);      // keep a clicked project selected when a filter changes
 }
 
 function renderList() {
@@ -290,12 +331,18 @@ function renderList() {
 }
 
 function select(id, fromList) {
-  selected = id;
+  selected = id; selectedProject = null;
   const o = visible.find(x => x.id === id); if (!o) return;
   drawSelection(o, true);
   renderList();
   const sel = document.querySelector('.card.sel'); if (sel && !fromList) sel.scrollIntoView({block: 'nearest', behavior: 'smooth'});
   renderDetail(o, byId[o.a], byId[o.b]);
+}
+
+// A centre badge with a tooltip: blue rounded square = Dominion, orange circle = Georgia Power.
+function badge(latlng, cls, text, tip, opts) {
+  return L.marker(latlng, Object.assign({icon: L.divIcon({className: '', html: `<span class="num ${cls}">${text}</span>`, iconSize: [24, 24], iconAnchor: [12, 12]})}, opts))
+    .bindTooltip(tip.text, tip.opts).addTo(layerSel);
 }
 
 // Draws the overlap test for one pair: the 25-mile circle, both projects, numbered badges and labels.
@@ -314,15 +361,14 @@ function drawSelection(o, fly) {
   L.polyline([a.c, b.c], {pane: 'selected', color: COL.ovl, weight: 3, opacity: 1}).addTo(layerSel);
   L.marker([(a.c[0] + b.c[0]) / 2, (a.c[1] + b.c[1]) / 2], {interactive: false, icon: L.divIcon({className: '', html: `<span class="gap-label">${o.dist.toFixed(1)} mi</span>`, iconSize: [54, 16], iconAnchor: [27, 8]})}).addTo(layerSel);
   // project centres: a blue "D" badge for the Dominion project, orange numbered badges for Georgia Power projects
-  const badge = (latlng, cls, text, tip, opts) => L.marker(latlng, Object.assign({icon: L.divIcon({className: '', html: `<span class="num ${cls}">${text}</span>`, iconSize: [24, 24], iconAnchor: [12, 12]})}, opts))
-    .bindTooltip(tip.text, tip.opts).addTo(layerSel);
-  badge(a.c, 'dom', 'D', {text: 'Dominion: ' + a.name, opts: {permanent: true, direction: 'top', className: 'tip tip-desc', offset: [0, -12]}}, {zIndexOffset: 900});
+  badge(a.c, 'dom', 'D', {text: 'Dominion: ' + a.name, opts: {permanent: true, direction: 'top', className: 'tip tip-desc', offset: [0, -12]}}, {zIndexOffset: 900})
+    .on('click', () => selectProject(a.id, false));            // the centre badges are clickable too: click one to make that project the centre
   inside.forEach((x, i) => {
     const g = byId[x.b]; if (!g) return;
     const m = badge(g.c, i === 0 ? 'sel' : '', i + 1,
       i === 0 ? {text: 'Georgia Power: ' + g.name, opts: {permanent: true, direction: 'bottom', className: 'tip tip-gpc', offset: [0, 12]}}
               : {text: (i + 1) + ' - Georgia Power: ' + g.name, opts: {sticky: true}}, {zIndexOffset: i === 0 ? 1000 : 700});
-    if (i > 0) m.on('click', () => select(x.id, false));
+    m.on('click', () => i > 0 ? select(x.id, false) : selectProject(g.id, false));
   });
   // substation names at the two ends of the two selected projects (the small dots)
   [[a, 'ep-desc'], [b, 'ep-gpc']].forEach(pair => [pair[0].a, pair[0].b].forEach(pt => {
@@ -334,6 +380,84 @@ function drawSelection(o, fly) {
   }));
   L.marker([a.c[0] + 25 / 69.0, a.c[1]], {interactive: false, icon: L.divIcon({className: '', html: '<span class="rad-label">25-mile radius around the Dominion project</span>', iconSize: [270, 20], iconAnchor: [135, 10]})}).addTo(layerSel);
   if (fly) map.flyToBounds(ring.getBounds().pad(0.05), {duration: .8});
+}
+
+// ---- click any project on the map: it becomes the centre of the 25-mile circle, and the other company's
+// projects are compared to it. Distance is the same both ways, so this finds the same pairs as the list.
+const miles = (p, q) => {
+  const R = 3958.8, rad = Math.PI / 180, dp = (q[0] - p[0]) * rad, dl = (q[1] - p[1]) * rad;
+  const h = Math.sin(dp / 2) ** 2 + Math.cos(p[0] * rad) * Math.cos(q[0] * rad) * Math.sin(dl / 2) ** 2;
+  return 2 * R * Math.asin(Math.sqrt(h));
+};
+const isDominion = p => p.util.startsWith('Dominion');
+
+// the other company's located projects whose centre is inside the 25-mile circle around p, nearest first
+function neighboursOf(p) {
+  const showPartners = document.getElementById('partners').checked;
+  const dayGap = (x, y) => x.date && y.date ? Math.abs(new Date(x.date) - new Date(y.date)) / 864e5 : null;
+  return DATA.projects
+    .filter(q => q.c && q.conf !== 'none' && q.id !== p.id &&
+      (isDominion(p) ? q.util === 'Georgia Power' && (showPartners || ['GPC', 'SAV'].includes(q.sponsor)) : isDominion(q)))
+    .map(q => ({q, dist: miles(p.c, q.c), gap: dayGap(p, q)}))
+    .filter(x => x.dist < 25)
+    .sort((x, y) => x.dist - y.dist);
+}
+
+function clearSelection() {
+  selected = null; selectedProject = null;
+  document.getElementById('detail').style.display = 'none';
+  layerSel.clearLayers(); map.getPane('overlaps').style.opacity = 1; renderList();
+}
+
+function selectProject(id, fly) {
+  const p = byId[id]; if (!p || !p.c) return;
+  selected = null; selectedProject = id;
+  renderList();                                   // no card is highlighted while a project is the centre
+  if (p.conf === 'none') {
+    layerSel.clearLayers();
+    const el = document.getElementById('detail');
+    el.style.display = 'block';
+    el.innerHTML = `<button class="x" aria-label="Close details">&times;</button><h3>${esc(p.name)}</h3>
+      <div class="rel">No location could be found for this project, so it cannot be compared.</div>`;
+    el.querySelector('.x').addEventListener('click', clearSelection);
+    return;
+  }
+  const near = neighboursOf(p), dom = isDominion(p), col = dom ? COL.desc : COL.gpc, who = dom ? 'Dominion' : 'Georgia Power';
+  layerSel.clearLayers();
+  map.getPane('overlaps').style.opacity = .28;    // fade everything else so the selection stands out
+  const ring = L.circle(p.c, {radius: 25 * 1609.34, color: col, weight: 2.5, dashArray: '8 7', fillColor: col, fillOpacity: .07, interactive: false}).addTo(layerSel);
+  near.forEach(x => {
+    L.polyline([p.c, x.q.c], {pane: 'selected', color: COL.ovl, weight: 1.5, opacity: .8, interactive: false}).addTo(layerSel);   // centre-to-centre distance
+    drawProject(x.q, layerSel, {weight: 4, opacity: .95, pane: 'selected'});
+  });
+  drawProject(p, layerSel, {weight: 6, opacity: 1, pane: 'selected'});
+  badge(p.c, dom ? 'dom' : 'sel', dom ? 'D' : 'G', {text: who + ': ' + p.name,
+    opts: {permanent: true, direction: 'top', className: 'tip ' + (dom ? 'tip-desc' : 'tip-gpc'), offset: [0, -12]}}, {zIndexOffset: 1000});
+  near.forEach((x, i) => {        // numbered badges: orange circles when the centre is Dominion, blue squares when it is Georgia Power
+    badge(x.q.c, dom ? '' : 'dom', i + 1, {text: `${i + 1} - ${dom ? 'Georgia Power' : 'Dominion'}: ${x.q.name} (${x.dist.toFixed(1)} mi)`, opts: {sticky: true}}, {zIndexOffset: 700})
+      .on('click', () => selectProject(x.q.id, false));
+  });
+  [p.a, p.b].forEach(pt => {      // substation names at the two ends of the centre project
+    if (!pt || !pt[2]) return;
+    L.circleMarker([pt[0], pt[1]], {pane: 'selected', radius: 1, opacity: 0, fillOpacity: 0, interactive: false})
+      .bindTooltip(String(pt[2]).split(' (')[0], {permanent: true, direction: dom ? 'right' : 'left', className: 'ep-label ' + (dom ? 'ep-desc' : 'ep-gpc'), offset: [dom ? 9 : -9, 0]}).addTo(layerSel);
+  });
+  L.marker([p.c[0] + 25 / 69.0, p.c[1]], {interactive: false, icon: L.divIcon({className: '', html: `<span class="rad-label" style="color:${col}">25-mile radius around the ${who} project</span>`, iconSize: [270, 20], iconAnchor: [135, 10]})}).addTo(layerSel);
+  if (fly !== false) map.flyToBounds(ring.getBounds().pad(0.05), {duration: .8});
+  renderProjectPanel(p, near);
+}
+
+function renderProjectPanel(p, near) {
+  const dom = isDominion(p), who = dom ? 'Dominion' : 'Georgia Power', other = dom ? 'Georgia Power' : 'Dominion', el = document.getElementById('detail');
+  const list = near.map((x, i) => `<div><a href="#" data-go="${esc(x.q.id)}"><span class="numchip${dom ? '' : ' dom'}">${i + 1}</span></a> ${esc(x.q.name)} &middot; <b>${x.dist.toFixed(1)} mi</b>${x.gap == null ? '' : ' &middot; ' + Math.round(x.gap) + ' days apart'}${x.q.conf === 'low' ? ' &middot; low-confidence location' : ''}</div>`).join('');
+  el.style.display = 'block';
+  el.innerHTML = `<button class="x" aria-label="Close details">&times;</button><h3>${esc(p.name)}</h3>
+    <div class="pop-m">${who} project &middot; the centre of the 25-mile circle</div>
+    <div class="rel"><b>${near.length ? `${near.length} ${other} project${near.length > 1 ? 's' : ''} inside this circle` : `No ${other} project inside this circle`}</b>
+      <span class="pop-m">(centre to centre${near.length ? '; numbers match the map, click one to make it the centre' : ''})</span>${list}</div>
+    <div class="rel">${popup(p, true)}</div>`;
+  el.querySelectorAll('[data-go]').forEach(a => a.addEventListener('click', e => { e.preventDefault(); selectProject(a.dataset.go, false); }));
+  el.querySelector('.x').addEventListener('click', clearSelection);
 }
 
 function timeline(a, b) {

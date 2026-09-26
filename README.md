@@ -12,7 +12,20 @@ each other, and ranks them as coordination opportunities.
   (blue). A Georgia Power project (orange) whose centre is inside the circle overlaps it. The two
   projects are labelled with their company name, and a red line shows the distance between the centres.
 * Other Georgia Power projects inside the same circle are drawn too, so you can see what crosses it.
-* Red glow around a project = it takes part in an overlap. Dotted line = low-confidence location.
+* **Click any project on the map**, Dominion or Georgia Power, to make it the centre: the 25-mile circle is
+  drawn around it and the other company's projects whose centres are inside are numbered, with their
+  distances in the side panel. Click a numbered badge to move the centre to that project. Distance is the
+  same both ways, so this finds the same pairs as the list, and it also works for projects that overlap nothing.
+* **Letters and numbers:** the project at the centre of the circle has a letter, **D** (Dominion) or **G**
+  (Georgia Power). The numbered badges are the *other* company's projects whose centres are inside the circle
+  (orange circles = Georgia Power, blue squares = Dominion), so each one forms an overlap pair with the centre
+  project. A number only means "within 25 miles, worth looking at for coordination". It does not mean the two
+  companies already work together, and it has nothing to do with the ITS-partner projects (GTC / MEAG / DU)
+  from Georgia's plan, which have no overlaps with Dominion and are left out of the map.
+* A project with two substations is two dots (the substations) joined by a line (blue Dominion, orange
+  Georgia Power). A project with only one location has no line and
+  is a single larger shape instead: a square for Dominion, a circle for Georgia Power (hollow if it overlaps
+  nothing). Red glow = the project takes part in an overlap. Dotted line or dashed outline = low-confidence location.
 * Filters: maximum distance, time gap, location quality. Tick *draw the 25-mile circle for every
   overlapping Dominion project* to see all the circles at once.
 
@@ -117,3 +130,10 @@ sheet, and under every estimate in the map. These are order-of-magnitude figures
 * The ITS-partner (GTC / MEAG / DU) projects produce no overlaps with Dominion and are left out of the
   workbook and the map.
 * Only public filings were used.
+
+## To do / ideas for later
+
+* **Numbered badges on the map:** decide whether to keep two colours (orange circles = Georgia Power projects,
+  blue squares = Dominion projects) or make every number one neutral colour. In any one view all the numbers
+  belong to the same company, so the colour only repeats what the "D" / "G" centre badge already says. If it
+  changes, also simplify the "numbers = the other company's projects" row in the map key.
