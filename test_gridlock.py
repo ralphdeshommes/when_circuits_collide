@@ -297,6 +297,17 @@ try {
   // ---- the detail card folds away without losing the selection ----
   const dc = el('detail');
   out.fold_open_on_load = dc.style.display !== 'none';
+  // Both header buttons must actually be clickable and not sit on top of each
+  // other -- an absolutely positioned close button once parked itself over the
+  // fold button, which made folding unreachable.
+  const fb = dc.querySelector('.fold').getBoundingClientRect();
+  const xb = dc.querySelector('.x').getBoundingClientRect();
+  out.fold_btn_size = [Math.round(fb.width), Math.round(fb.height)];
+  out.x_btn_size = [Math.round(xb.width), Math.round(xb.height)];
+  out.btns_overlap = !(fb.right <= xb.left || xb.right <= fb.left
+                       || fb.bottom <= xb.top || xb.bottom <= fb.top);
+  out.fold_btn_visible = getComputedStyle(dc.querySelector('.fold')).display !== 'none'
+                         && fb.width > 0 && fb.height > 0;
   out.fold_h_open = Math.round(dc.getBoundingClientRect().height);
   out.fold_layers_open = layerSel.getLayers().length;
   dc.querySelector('.fold').click();
@@ -463,6 +474,12 @@ def test_map():
     # containment is computed from the cursor instead.
     # The detail card sits over the map, so it must be foldable without losing
     # the selection drawn underneath it.
+    check("fold and close buttons are both visible",
+          r.get("fold_btn_visible") and min(r.get("fold_btn_size", [0, 0])) > 12
+          and min(r.get("x_btn_size", [0, 0])) > 12,
+          (r.get("fold_btn_size"), r.get("x_btn_size")))
+    check("fold and close buttons do not overlap each other",
+          r.get("btns_overlap") is False, "they overlap")
     check("detail card folds to a title bar",
           r.get("fold_class") and r.get("fold_h_folded", 999) < 80,
           r.get("fold_h_folded"))
