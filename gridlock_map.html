@@ -91,7 +91,7 @@
   .leaflet-popup-content { font-size: 12.5px; line-height: 1.45; }
   .pop-t { font-weight: 700; margin-bottom: 2px; } .pop-m { color: #5d6a7a; }
   .gap-label { background: #fff; border: 1px solid var(--ovl); color: var(--ovl); border-radius: 4px; padding: 0 4px; font-weight: 700; font-size: 11px; white-space: nowrap; }
-  .legend i.ring { width: 12px; height: 12px; border: 2px dashed var(--desc); border-radius: 50%; background: rgba(31,95,191,.10); }
+  .legend i.ring { width: 12px; height: 12px; border: 2px solid var(--desc); border-radius: 50%; background: rgba(31,95,191,.10); }
   .rad-label { color: var(--desc); font-weight: 700; font-size: 11.5px; background: rgba(255,255,255,.88); padding: 1px 7px; border-radius: 4px; white-space: nowrap; }
   .leaflet-tooltip.tip { font-weight: 700; font-size: 11.5px; white-space: normal; width: max-content; max-width: 240px; border: 2px solid; padding: 3px 7px; }
   .leaflet-tooltip.tip-desc { color: var(--desc); border-color: var(--desc); }
@@ -344,7 +344,7 @@ function drawSelection(o, fly) {
   map.getPane('overlaps').style.opacity = .28;        // fade everything else so the selection stands out
   // the overlap test, drawn: a 25-mile circle around the Dominion project's centre.
   // A Georgia Power project whose centre falls inside the circle is an overlap.
-  const ring = L.circle(a.c, {radius: 25 * 1609.34, color: COL.desc, weight: 5, dashArray: '12 9', fillColor: COL.desc, fillOpacity: .07, interactive: false}).addTo(layerSel);
+  const ring = L.circle(a.c, {radius: 25 * 1609.34, color: COL.desc, weight: 5, fillColor: COL.desc, fillOpacity: .07, interactive: false}).addTo(layerSel);
   rings = rings.filter(r => r.kind !== 'sel');
   rings.push({kind: 'sel', p: a, layer: ring, base: {weight: 5, fillOpacity: .07}});
   // every Georgia Power project inside the same circle; each gets a numbered badge (1 = the selected pair)
