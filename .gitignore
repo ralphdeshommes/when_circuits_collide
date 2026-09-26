@@ -1,2 +1,4 @@
 .venv/
 geocode_review_*.csv
+__pycache__/
+*.pyc
