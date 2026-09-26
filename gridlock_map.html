@@ -38,6 +38,10 @@
   #listwrap { flex: 1; overflow-y: auto; min-height: 0; }
   #listhead { padding: 10px 18px 4px; font-weight: 600; display: flex; justify-content: space-between; }
   #listhead span { color: var(--muted); font-weight: 400; font-size: 12px; }
+  .morebtn { display: block; width: calc(100% - 24px); margin: 6px 12px 12px; padding: 7px 10px;
+             font: inherit; font-size: 12px; color: var(--ink); background: #f3f5f8;
+             border: 1px solid var(--line); border-radius: 6px; cursor: pointer; }
+  .morebtn:hover { background: #e9edf2; }
   .card { margin: 6px 12px; padding: 10px 12px; border: 1px solid var(--line); border-radius: var(--radius); cursor: pointer; background: #fff; }
   .card:hover { border-color: #b8c1cc; }
   .card.sel { border-color: var(--ovl); box-shadow: 0 0 0 2px rgba(196,35,45,.15); }
@@ -163,7 +167,7 @@
       <label class="chk"><input id="radii" type="checkbox"> draw the 25-mile circle for every overlapping Dominion project</label>
       <label class="chk"><input id="partners" type="checkbox"> include Georgia ITS partner projects (GTC / MEAG / DU)</label>
     </section>
-    <div id="listhead"><div>Top coordination opportunities</div><span id="listcount"></span></div>
+    <div id="listhead"><div id="listtitle">Top coordination opportunities</div><span id="listcount"></span></div>
     <div id="listwrap"><div id="list"></div></div>
   </aside>
   <main id="mapwrap">
@@ -342,12 +346,24 @@ function render() {
   else if (selectedProject) selectProject(selectedProject, false);      // keep a clicked project selected when a filter changes
 }
 
+// The deliverable is a ranked top ten, so that is what the list shows by
+// default. Everything below it stays reachable rather than being thrown away.
+const TOP_N = 10;
+let showAllRanked = false;
+
 function renderList() {
   const el = document.getElementById('list');
   const grouped = document.getElementById('group').checked;
-  document.getElementById('listcount').textContent = grouped ? `${items.length} from ${visible.length} pairs` : `${visible.length} pairs`;
+  const shown = showAllRanked ? items : items.slice(0, TOP_N);
+  const capped = items.length > TOP_N;
+  document.getElementById('listtitle').textContent =
+    capped && !showAllRanked ? `Top ${TOP_N} coordination opportunities`
+                             : 'Top coordination opportunities';
+  document.getElementById('listcount').textContent =
+    (capped && !showAllRanked ? `${shown.length} of ${items.length}` : `${items.length}`)
+    + (grouped ? ` from ${visible.length} pairs` : ' pairs');
   if (!items.length) { el.innerHTML = '<div class="empty">No overlaps match these filters.<br>Try a larger distance or time gap.</div>'; return; }
-  el.innerHTML = items.map((o, i) => {
+  el.innerHTML = shown.map((o, i) => {
     const r = grouped ? relatedTo(o) : null;
     const bits = r ? [r.siblings.length ? `+${r.siblings.length} same-corridor project${r.siblings.length > 1 ? 's' : ''} merged` : '',
                       r.others.length ? `${r.others.length} other nearby pair${r.others.length > 1 ? 's' : ''}` : ''].filter(Boolean) : [];
@@ -359,6 +375,15 @@ function renderList() {
       ${bits.length ? `<div class="meta">${bits.join(' &middot; ')}</div>` : ''}
     </div>`;
   }).join('');
+  if (capped) {
+    el.insertAdjacentHTML('beforeend',
+      `<button id="morebtn" class="morebtn">${showAllRanked
+        ? `Show top ${TOP_N} only` : `Show all ${items.length}`}</button>`);
+    document.getElementById('morebtn').addEventListener('click', () => {
+      showAllRanked = !showAllRanked;
+      renderList();
+    });
+  }
   el.querySelectorAll('.card').forEach(c => {
     c.addEventListener('click', () => select(c.dataset.id, true));
     c.addEventListener('keydown', e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); select(c.dataset.id, true); } });

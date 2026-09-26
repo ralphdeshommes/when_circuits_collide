@@ -257,7 +257,19 @@ try {
   out.paths = document.querySelectorAll('path').length;
 
   const g = el('group');
-  g.checked = false; fire(g); out.cards_unmerged = cards();
+  out.top_merged_cards = cards();
+  out.top_merged_title = el('listtitle').textContent.trim();
+  g.checked = false; fire(g);
+  out.cards_unmerged = cards();                 // capped at the top ten
+  out.top_title = el('listtitle').textContent.trim();
+  out.top_count = el('listcount').textContent.trim();
+  out.top_more_label = (el('morebtn') || {}).textContent;
+  out.top_first_rank = document.querySelector('.card .rank').textContent.trim();
+  el('morebtn').click();
+  out.top_expanded = cards();
+  out.top_expanded_label = (el('morebtn') || {}).textContent;
+  el('morebtn').click();
+  out.top_recollapsed = cards();
   g.checked = true;  fire(g); out.cards_remerged = cards();
 
   const mi = el('miles');
@@ -462,8 +474,25 @@ def test_map():
     check("opportunity list is populated", r["cards_default"] == 7, r["cards_default"])
     check("list header reports the de-duplication",
           "from 55 pairs" in r["count_default"], r["count_default"])
-    check("unticking 'merge duplicates' shows all 55 pairs",
-          r["cards_unmerged"] == 55, r["cards_unmerged"])
+    # The deliverable is a ranked top ten. With duplicates merged there are only
+    # seven distinct opportunities, so the cap only bites on the raw pair list.
+    check("the ranked list is capped at ten", r.get("cards_unmerged") == 10,
+          r.get("cards_unmerged"))
+    check("the heading says Top 10 when capped",
+          "Top 10" in (r.get("top_title") or ""), r.get("top_title"))
+    check("the count shows what is hidden",
+          "of 55" in (r.get("top_count") or ""), r.get("top_count"))
+    check("the list is ranked best first", r.get("top_first_rank") == "#1",
+          r.get("top_first_rank"))
+    check("show-all reveals every pair", r.get("top_expanded") == 55,
+          r.get("top_expanded"))
+    check("the control offers to collapse again",
+          "top 10" in (r.get("top_expanded_label") or "").lower(),
+          r.get("top_expanded_label"))
+    check("collapsing returns to ten", r.get("top_recollapsed") == 10,
+          r.get("top_recollapsed"))
+    check("merged view shows all seven distinct opportunities uncapped",
+          r.get("top_merged_cards") == 7, r.get("top_merged_cards"))
     check("re-ticking it returns to 7", r["cards_remerged"] == 7, r["cards_remerged"])
     check("distance slider narrows the list",
           r["cards_10mi"] < r["cards_default"], (r["cards_10mi"], r["cards_default"]))
