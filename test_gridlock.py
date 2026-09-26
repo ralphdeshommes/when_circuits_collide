@@ -294,6 +294,31 @@ try {
   out.detail = (document.querySelector('#detail') || document.body).textContent.slice(0, 600);
   out.selected_on_load = SELECTED_ON_LOAD;
 
+  // ---- the detail card folds away without losing the selection ----
+  const dc = el('detail');
+  out.fold_open_on_load = dc.style.display !== 'none';
+  out.fold_h_open = Math.round(dc.getBoundingClientRect().height);
+  out.fold_layers_open = layerSel.getLayers().length;
+  dc.querySelector('.fold').click();
+  out.fold_class = dc.classList.contains('folded');
+  out.fold_h_folded = Math.round(dc.getBoundingClientRect().height);
+  out.fold_body_hidden = getComputedStyle(dc.querySelector('.dbody')).display === 'none';
+  out.fold_title = dc.querySelector('h3').textContent.trim();
+  out.fold_layers_kept = layerSel.getLayers().length;
+  out.fold_still_selected = String(selected);
+  dc.click();                                   // clicking the folded bar reopens it
+  out.fold_reexpanded = !dc.classList.contains('folded');
+  dc.querySelector('.fold').click();            // fold again, then pick another pair
+  document.querySelectorAll('.card')[1].click();
+  out.fold_sticky = dc.classList.contains('folded');
+  out.fold_new_title = dc.querySelector('h3').textContent.trim();
+  out.fold_new_drawn = layerSel.getLayers().length > 0;
+  dc.querySelector('.x').click();               // the close button still clears
+  out.fold_closed = dc.style.display === 'none';
+  out.fold_cleared = layerSel.getLayers().length === 0 && selected === null;
+  document.querySelector('.card').click();      // restore for the checks that follow
+  setFold(false);
+
   // ---- hover readout over the 25-mile circles ----
   const box = el('hoverinfo');
   out.hover_box_exists = !!box;
@@ -436,6 +461,27 @@ def test_map():
     # Hovering the 25-mile circles. Leaflet's own mouseover reports only the
     # topmost shape, so intersecting circles are exactly the case that breaks;
     # containment is computed from the cursor instead.
+    # The detail card sits over the map, so it must be foldable without losing
+    # the selection drawn underneath it.
+    check("detail card folds to a title bar",
+          r.get("fold_class") and r.get("fold_h_folded", 999) < 80,
+          r.get("fold_h_folded"))
+    check("folding frees most of the map",
+          r.get("fold_h_folded", 999) < r.get("fold_h_open", 0) / 3,
+          (r.get("fold_h_folded"), r.get("fold_h_open")))
+    check("folded card hides its body", r.get("fold_body_hidden"))
+    check("folded card still names the pair",
+          "OVL" in (r.get("fold_title") or ""), r.get("fold_title"))
+    check("folding keeps the pair selected and drawn",
+          r.get("fold_layers_kept") == r.get("fold_layers_open")
+          and r.get("fold_still_selected", "null") != "null",
+          (r.get("fold_layers_kept"), r.get("fold_layers_open")))
+    check("clicking the folded bar reopens it", r.get("fold_reexpanded"))
+    check("the fold choice sticks when another pair is picked", r.get("fold_sticky"))
+    check("a pair picked while folded is still drawn on the map", r.get("fold_new_drawn"))
+    check("the close button still clears the selection entirely",
+          r.get("fold_closed") and r.get("fold_cleared"))
+
     check("hover readout panel exists", r.get("hover_box_exists"))
     check("hover panel hidden until the cursor is over a circle",
           r.get("hover_hidden_at_rest") is True)

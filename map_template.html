@@ -49,6 +49,22 @@
   .nm { margin-top: 6px; font-size: 12.5px; }
   .nm .d { color: var(--desc); font-weight: 600; } .nm .g { color: var(--gpc); font-weight: 600; }
   .meta { color: var(--muted); font-size: 11.5px; margin-top: 5px; }
+  /* the detail card can be folded down to its title bar so it stops covering
+     the map, without losing the selection drawn underneath it */
+  #detail .dbar { display: flex; align-items: center; gap: 8px; }
+  #detail .dbar h3 { margin: 0; flex: 1; min-width: 0; }
+  #detail .fold, #detail .x { flex: 0 0 auto; background: none; border: 0; cursor: pointer;
+                              color: var(--muted); line-height: 1; border-radius: 5px;
+                              width: 26px; height: 26px; display: inline-flex;
+                              align-items: center; justify-content: center; font-size: 16px; }
+  #detail .fold:hover, #detail .x:hover { background: #eef1f5; color: var(--ink); }
+  #detail .fold { font-size: 11px; }
+  #detail .dbar { gap: 2px; }
+  #detail.folded { width: auto; max-width: min(340px, calc(100% - 28px)); max-height: none;
+                   overflow: visible; padding-bottom: 8px; cursor: pointer; }
+  #detail.folded .dbody { display: none; }
+  #detail.folded .dbar h3 { font-size: 12.5px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+
   /* hover readout: top-right, clear of #detail which sits bottom-right */
   #hoverinfo { position: absolute; right: 58px; top: 14px; width: 270px; max-width: calc(100% - 28px);
                z-index: 801; background: var(--panel); border: 1px solid var(--line); border-radius: 8px;
@@ -389,7 +405,12 @@ function renderDetail(o, a, b) {
     est = `<tr><td>Corridor sharing</td><td>no shared corridor or site (closest points ${o.minsep.toFixed(1)} mi apart); coordination would be scheduling, crews and equipment</td></tr>`;
   }
   el.style.display = 'block';
-  el.innerHTML = `<button class="x" aria-label="Close details">&times;</button><h3>${esc(o.id)} &middot; ${o.dist.toFixed(1)} mi apart &middot; ${o.gap} days</h3>
+  el.innerHTML = `<div class="dbar">
+      <h3>${esc(o.id)} &middot; ${o.dist.toFixed(1)} mi apart &middot; ${o.gap} days</h3>
+      <button class="fold" aria-label="Collapse details" aria-expanded="true" title="Collapse">&#9660;</button>
+      <button class="x" aria-label="Close details" title="Close and clear the selection">&times;</button>
+    </div>
+    <div class="dbody">
     ${timeline(a, b)}
     <table>
       <tr><td><span style="color:${COL.desc};font-weight:700">Dominion</span></td><td>${esc(a.name)}<br><span class="pop-m">${esc(a.id)} &middot; ${fmtDate(a.date)}${a.cost ? ' &middot; ' + money(a.cost) : ''}</span></td></tr>
@@ -400,9 +421,39 @@ function renderDetail(o, a, b) {
       ${est}
     </table>
     ${relatedHtml(o)}
-    <div class="assume">Estimate assumptions: ROW widths ${Object.entries(A.rowWidth).map(([k, v]) => k + ' kV=' + v + ' ft').join(', ')}; a second line beside an existing one adds ${Math.round(A.extra * 100)}% width; joint delivery avoids ${Math.round(A.lowPct * 100)}-${Math.round(A.highPct * 100)}% of the shared cost (a shared site counts ${Math.round(A.siteShare * 100)}% of the Dominion project cost), faded to zero as the schedule gap reaches ${(A.taper / 365).toFixed(0)} years. Lines are drawn straight between their two substations.</div>`;
+    <div class="assume">Estimate assumptions: ROW widths ${Object.entries(A.rowWidth).map(([k, v]) => k + ' kV=' + v + ' ft').join(', ')}; a second line beside an existing one adds ${Math.round(A.extra * 100)}% width; joint delivery avoids ${Math.round(A.lowPct * 100)}-${Math.round(A.highPct * 100)}% of the shared cost (a shared site counts ${Math.round(A.siteShare * 100)}% of the Dominion project cost), faded to zero as the schedule gap reaches ${(A.taper / 365).toFixed(0)} years. Lines are drawn straight between their two substations.</div>
+    </div>`;
   el.querySelectorAll('[data-go]').forEach(a => a.addEventListener('click', e => { e.preventDefault(); select(a.dataset.go, false); }));
-  el.querySelector('.x').addEventListener('click', () => { selected = null; el.style.display = 'none'; layerSel.clearLayers(); rings = rings.filter(r => r.kind !== 'sel'); clearHover(); map.getPane('overlaps').style.opacity = 1; renderList(); });
+  // Folding hides the body only. The pair stays selected and stays drawn on the
+  // map, so folding is a way to see the map without losing your place; the
+  // choice sticks when you pick another pair.
+  applyFold(el);
+  el.querySelector('.fold').addEventListener('click', e => { e.stopPropagation(); setFold(!detailFolded); });
+  el.addEventListener('click', e => { if (detailFolded && !e.target.closest('.x')) setFold(false); });
+  el.querySelector('.x').addEventListener('click', e => {
+    e.stopPropagation();
+    selected = null; el.style.display = 'none'; layerSel.clearLayers();
+    rings = rings.filter(r => r.kind !== 'sel'); clearHover();
+    map.getPane('overlaps').style.opacity = 1; renderList();
+  });
+}
+
+// ---- fold state for the detail card --------------------------------------
+let detailFolded = false;
+
+function applyFold(el) {
+  el.classList.toggle('folded', detailFolded);
+  const b = el.querySelector('.fold');
+  if (!b) return;
+  b.innerHTML = detailFolded ? '&#9650;' : '&#9660;';
+  b.title = detailFolded ? 'Expand' : 'Collapse';
+  b.setAttribute('aria-label', detailFolded ? 'Expand details' : 'Collapse details');
+  b.setAttribute('aria-expanded', String(!detailFolded));
+}
+
+function setFold(v) {
+  detailFolded = v;
+  applyFold(document.getElementById('detail'));
 }
 
 if (!DATA.partners.length) document.getElementById('partners').closest('label').style.display = 'none';
