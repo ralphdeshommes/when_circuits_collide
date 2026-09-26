@@ -53,12 +53,12 @@
      the map, without losing the selection drawn underneath it */
   #detail .dbar { display: flex; align-items: center; gap: 8px; }
   #detail .dbar h3 { margin: 0; flex: 1; min-width: 0; }
-  #detail .fold, #detail .x { flex: 0 0 auto; background: none; border: 0; cursor: pointer;
+  #detail .fold { flex: 0 0 auto; background: none; border: 0; cursor: pointer;
                               color: var(--muted); line-height: 1; border-radius: 5px;
                               width: 26px; height: 26px; display: inline-flex;
                               align-items: center; justify-content: center; font-size: 16px; }
-  #detail .fold:hover, #detail .x:hover { background: #eef1f5; color: var(--ink); }
-  #detail .fold { font-size: 11px; }
+  #detail .fold:hover { background: #eef1f5; color: var(--ink); }
+  #detail .fold { font-size: 18px; font-weight: 600; }
   #detail .dbar { gap: 2px; }
   #detail.folded { width: auto; max-width: min(340px, calc(100% - 28px)); max-height: none;
                    overflow: visible; padding-bottom: 8px; cursor: pointer; }
@@ -406,8 +406,7 @@ function renderDetail(o, a, b) {
   el.style.display = 'block';
   el.innerHTML = `<div class="dbar">
       <h3>${esc(o.id)} &middot; ${o.dist.toFixed(1)} mi apart &middot; ${o.gap} days</h3>
-      <button class="fold" aria-label="Collapse details" aria-expanded="true" title="Collapse">&#9660;</button>
-      <button class="x" aria-label="Close details" title="Close and clear the selection">&times;</button>
+      <button class="fold" aria-label="Collapse details" aria-expanded="true" title="Collapse">&minus;</button>
     </div>
     <div class="dbody">
     ${timeline(a, b)}
@@ -428,13 +427,7 @@ function renderDetail(o, a, b) {
   // choice sticks when you pick another pair.
   applyFold(el);
   el.querySelector('.fold').addEventListener('click', e => { e.stopPropagation(); setFold(!detailFolded); });
-  el.addEventListener('click', e => { if (detailFolded && !e.target.closest('.x')) setFold(false); });
-  el.querySelector('.x').addEventListener('click', e => {
-    e.stopPropagation();
-    selected = null; el.style.display = 'none'; layerSel.clearLayers();
-    rings = rings.filter(r => r.kind !== 'sel'); clearHover();
-    map.getPane('overlaps').style.opacity = 1; renderList();
-  });
+  el.addEventListener('click', () => { if (detailFolded) setFold(false); });
 }
 
 // ---- fold state for the detail card --------------------------------------
@@ -444,7 +437,7 @@ function applyFold(el) {
   el.classList.toggle('folded', detailFolded);
   const b = el.querySelector('.fold');
   if (!b) return;
-  b.innerHTML = detailFolded ? '&#9650;' : '&#9660;';
+  b.innerHTML = detailFolded ? '&plus;' : '&minus;';
   b.title = detailFolded ? 'Expand' : 'Collapse';
   b.setAttribute('aria-label', detailFolded ? 'Expand details' : 'Collapse details');
   b.setAttribute('aria-expanded', String(!detailFolded));
@@ -453,6 +446,10 @@ function applyFold(el) {
 function setFold(v) {
   detailFolded = v;
   applyFold(document.getElementById('detail'));
+  // Selecting a pair dims the rest of the map so the pair stands out. While the
+  // card is collapsed the point is to see the map, so undim it and put it back
+  // on expand.
+  map.getPane('overlaps').style.opacity = v ? 1 : .28;
 }
 
 if (!DATA.partners.length) document.getElementById('partners').closest('label').style.display = 'none';

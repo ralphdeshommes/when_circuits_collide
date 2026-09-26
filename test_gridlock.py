@@ -297,17 +297,21 @@ try {
   // ---- the detail card folds away without losing the selection ----
   const dc = el('detail');
   out.fold_open_on_load = dc.style.display !== 'none';
-  // Both header buttons must actually be clickable and not sit on top of each
-  // other -- an absolutely positioned close button once parked itself over the
-  // fold button, which made folding unreachable.
+  // One control only. It must really be painted, not merely present in the DOM:
+  // a previous version had it covered by an absolutely positioned close button,
+  // which every behavioural test passed straight through.
   const fb = dc.querySelector('.fold').getBoundingClientRect();
-  const xb = dc.querySelector('.x').getBoundingClientRect();
   out.fold_btn_size = [Math.round(fb.width), Math.round(fb.height)];
-  out.x_btn_size = [Math.round(xb.width), Math.round(xb.height)];
-  out.btns_overlap = !(fb.right <= xb.left || xb.right <= fb.left
-                       || fb.bottom <= xb.top || xb.bottom <= fb.top);
   out.fold_btn_visible = getComputedStyle(dc.querySelector('.fold')).display !== 'none'
                          && fb.width > 0 && fb.height > 0;
+  out.no_close_button = !dc.querySelector('.x');
+  out.fold_btn_glyph_open = dc.querySelector('.fold').textContent.trim();
+  // nothing else in the bar may sit on top of it
+  out.fold_btn_on_top = (() => {
+    const c = document.elementFromPoint((fb.left + fb.right) / 2, (fb.top + fb.bottom) / 2);
+    return !!(c && c.closest('.fold'));
+  })();
+  out.dim_open = getComputedStyle(map.getPane('overlaps')).opacity;
   out.fold_h_open = Math.round(dc.getBoundingClientRect().height);
   out.fold_layers_open = layerSel.getLayers().length;
   dc.querySelector('.fold').click();
@@ -317,6 +321,8 @@ try {
   out.fold_title = dc.querySelector('h3').textContent.trim();
   out.fold_layers_kept = layerSel.getLayers().length;
   out.fold_still_selected = String(selected);
+  out.fold_btn_glyph_folded = dc.querySelector('.fold').textContent.trim();
+  out.dim_folded = getComputedStyle(map.getPane('overlaps')).opacity;
   dc.click();                                   // clicking the folded bar reopens it
   out.fold_reexpanded = !dc.classList.contains('folded');
   dc.querySelector('.fold').click();            // fold again, then pick another pair
@@ -324,10 +330,6 @@ try {
   out.fold_sticky = dc.classList.contains('folded');
   out.fold_new_title = dc.querySelector('h3').textContent.trim();
   out.fold_new_drawn = layerSel.getLayers().length > 0;
-  dc.querySelector('.x').click();               // the close button still clears
-  out.fold_closed = dc.style.display === 'none';
-  out.fold_cleared = layerSel.getLayers().length === 0 && selected === null;
-  document.querySelector('.card').click();      // restore for the checks that follow
   setFold(false);
 
   // ---- hover readout over the 25-mile circles ----
@@ -474,12 +476,19 @@ def test_map():
     # containment is computed from the cursor instead.
     # The detail card sits over the map, so it must be foldable without losing
     # the selection drawn underneath it.
-    check("fold and close buttons are both visible",
-          r.get("fold_btn_visible") and min(r.get("fold_btn_size", [0, 0])) > 12
-          and min(r.get("x_btn_size", [0, 0])) > 12,
-          (r.get("fold_btn_size"), r.get("x_btn_size")))
-    check("fold and close buttons do not overlap each other",
-          r.get("btns_overlap") is False, "they overlap")
+    check("the collapse button is visible with a usable hit target",
+          r.get("fold_btn_visible") and min(r.get("fold_btn_size", [0, 0])) > 12,
+          r.get("fold_btn_size"))
+    check("nothing is painted on top of the collapse button",
+          r.get("fold_btn_on_top"), "something covers it")
+    check("there is no close button", r.get("no_close_button"))
+    check("the control reads as minus when open and plus when collapsed",
+          r.get("fold_btn_glyph_open") in ("\u2212", "-")
+          and r.get("fold_btn_glyph_folded") in ("+",),
+          (r.get("fold_btn_glyph_open"), r.get("fold_btn_glyph_folded")))
+    check("collapsing undims the rest of the map",
+          float(r.get("dim_folded", 0)) > float(r.get("dim_open", 1)),
+          (r.get("dim_open"), r.get("dim_folded")))
     check("detail card folds to a title bar",
           r.get("fold_class") and r.get("fold_h_folded", 999) < 80,
           r.get("fold_h_folded"))
@@ -496,9 +505,6 @@ def test_map():
     check("clicking the folded bar reopens it", r.get("fold_reexpanded"))
     check("the fold choice sticks when another pair is picked", r.get("fold_sticky"))
     check("a pair picked while folded is still drawn on the map", r.get("fold_new_drawn"))
-    check("the close button still clears the selection entirely",
-          r.get("fold_closed") and r.get("fold_cleared"))
-
     check("hover readout panel exists", r.get("hover_box_exists"))
     check("hover panel hidden until the cursor is over a circle",
           r.get("hover_hidden_at_rest") is True)
