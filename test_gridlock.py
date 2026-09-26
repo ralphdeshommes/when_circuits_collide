@@ -256,6 +256,18 @@ try {
   out.count_default = el('listcount').textContent.trim();
   out.paths = document.querySelectorAll('path').length;
 
+  // The ranked list must be reachable without scrolling past the map key.
+  const topOf = sel => Math.round(document.querySelector(sel).getBoundingClientRect().top);
+  out.side_list_top = topOf('#listhead');
+  out.side_key_top = topOf('#mapkey');
+  out.side_list_above_key = topOf('#listhead') < topOf('#mapkey');
+  out.side_key_collapsed = !el('mapkey').open;
+  out.side_cards_in_view = [...document.querySelectorAll('.card')]
+    .filter(c => c.getBoundingClientRect().bottom <= window.innerHeight).length;
+  el('mapkey').open = true;
+  out.side_key_expands = !!document.querySelector('#mapkey .legend');
+  el('mapkey').open = false;
+
   const g = el('group');
   out.top_merged_cards = cards();
   out.top_merged_title = el('listtitle').textContent.trim();
@@ -475,6 +487,15 @@ def test_map():
     check("opportunity list is populated", r["cards_default"] == 7, r["cards_default"])
     check("list header reports the de-duplication",
           "from 55 pairs" in r["count_default"], r["count_default"])
+    # The ranked list is the deliverable, so it must be visible in the sidebar
+    # without scrolling past the map key, which is long and read once.
+    check("the ranked list sits above the map key", r.get("side_list_above_key"),
+          (r.get("side_list_top"), r.get("side_key_top")))
+    check("the map key is folded away by default", r.get("side_key_collapsed"))
+    check("the map key still expands", r.get("side_key_expands"))
+    check("at least one ranked card is visible without scrolling",
+          r.get("side_cards_in_view", 0) >= 1, r.get("side_cards_in_view"))
+
     # The deliverable is a ranked top ten. With duplicates merged there are only
     # seven distinct opportunities, so the cap only bites on the raw pair list.
     check("the ranked list is capped at ten", r.get("cards_unmerged") == 10,
