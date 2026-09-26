@@ -1,0 +1,313 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>GridLock - GA/SC Transmission Overlaps</title>
+
+<!-- Leaflet: the only thing not embedded in this file. -->
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
+
+<style>
+  /* ---- palette: one colour per utility, one per pair confidence ---- */
+  :root {
+    --desc:      #1d6fb8;   /* Dominion Energy South Carolina */
+    --gpc:       #d2601a;   /* Georgia Power                  */
+    --its:       #7b4bc4;   /* Georgia ITS partners: GTC, MEAG, Dalton */
+    --verified:  #0f9d58;   /* both sides of the pair confirmed */
+    --needs:     #e0a800;   /* at least one side still auto-matched */
+    --ink:       #1c2530;
+    --muted:     #6b7785;
+    --line:      #dfe4ea;
+    --panel:     #ffffff;
+  }
+  * { box-sizing: border-box; }
+  html, body { height: 100%; margin: 0; }
+  body {
+    display: flex; font: 14px/1.45 -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    color: var(--ink); background: #eef1f4;
+  }
+
+  /* ---- sidebar: ranked overlap list + controls ---- */
+  #sidebar {
+    width: 360px; flex: 0 0 360px; height: 100%; overflow-y: auto;
+    background: var(--panel); border-right: 1px solid var(--line);
+  }
+  #sidebar header { padding: 16px 16px 12px; border-bottom: 1px solid var(--line); }
+  #sidebar h1 { margin: 0 0 2px; font-size: 17px; letter-spacing: -0.2px; }
+  #sidebar .sub { color: var(--muted); font-size: 12px; }
+
+  #controls { padding: 12px 16px; border-bottom: 1px solid var(--line); background: #fafbfc; }
+  #controls label { display: block; font-size: 12px; color: var(--muted); margin-bottom: 4px; }
+  #controls input[type=range] { width: 100%; }
+  .toggle { display: flex; align-items: center; gap: 8px; margin-top: 10px; font-size: 13px; color: var(--ink); }
+  .toggle input { margin: 0; }
+
+  #legend { padding: 12px 16px; border-bottom: 1px solid var(--line); font-size: 12px; }
+  #legend .row { display: flex; align-items: center; gap: 8px; margin-bottom: 5px; }
+  #legend .swatch { width: 22px; height: 0; border-top-width: 3px; border-top-style: solid; flex: 0 0 22px; }
+  #legend .dot { width: 10px; height: 10px; border-radius: 50%; flex: 0 0 10px; }
+
+  #count { padding: 10px 16px 4px; font-size: 12px; color: var(--muted); }
+  #list { padding: 0 8px 16px; }
+  .item {
+    padding: 9px 10px; margin: 4px 0; border: 1px solid var(--line); border-left-width: 4px;
+    border-radius: 6px; cursor: pointer; background: #fff;
+  }
+  .item:hover { background: #f5f8fb; }
+  .item.sel { background: #eef5fc; border-color: #9dc4e8; border-left-color: inherit; }
+  .item .top { display: flex; justify-content: space-between; gap: 8px; font-weight: 600; font-size: 13px; }
+  .item .meta { color: var(--muted); font-size: 11.5px; margin-top: 3px; }
+  .item .names { font-size: 12px; margin-top: 5px; line-height: 1.35; }
+  .badge { font-size: 10px; text-transform: uppercase; letter-spacing: .4px;
+           padding: 2px 6px; border-radius: 10px; color: #fff; white-space: nowrap; }
+  .empty { padding: 20px 16px; color: var(--muted); font-size: 13px; }
+
+  /* ---- map ---- */
+  #map { flex: 1; height: 100%; }
+  .leaflet-popup-content { margin: 12px 14px; font-size: 13px; line-height: 1.5; }
+  .pop-title { font-weight: 600; margin-bottom: 6px; }
+  .pop-row { display: flex; gap: 8px; }
+  .pop-row .k { color: var(--muted); flex: 0 0 96px; }
+  .pop-src { margin-top: 8px; padding-top: 7px; border-top: 1px solid var(--line);
+             color: var(--muted); font-size: 11.5px; }
+
+  @media (max-width: 760px) {
+    body { flex-direction: column; }
+    #sidebar { width: 100%; flex: 0 0 45%; border-right: none; border-bottom: 1px solid var(--line); }
+  }
+</style>
+</head>
+<body>
+
+<div id="sidebar">
+  <header>
+    <h1>GridLock</h1>
+    <div class="sub">Overlapping transmission projects, Georgia &amp; South Carolina</div>
+  </header>
+
+  <div id="controls">
+    <label>Max distance between project centers: <b><span id="miOut">25</span> mi</b></label>
+    <input type="range" id="miles" min="1" max="25" step="1" value="25">
+    <div class="toggle">
+      <input type="checkbox" id="onlyVerified">
+      <label for="onlyVerified" style="margin:0;color:var(--ink)">Only pairs verified on both sides</label>
+    </div>
+  </div>
+
+  <div id="legend"></div>
+  <div id="count"></div>
+  <div id="list"></div>
+</div>
+
+<div id="map"></div>
+
+<script>
+/* ============================================================================
+   DATA  - written in by build_map.py. Nothing is fetched at view time.
+   ========================================================================= */
+const DATA = /*__DATA__*/;
+
+const COLORS = {
+  DESC: getCSS('--desc'), GPC: getCSS('--gpc'), ITS: getCSS('--its'),
+  verified: getCSS('--verified'), needs_check: getCSS('--needs')
+};
+function getCSS(name) {
+  return getComputedStyle(document.documentElement).getPropertyValue(name).trim();
+}
+
+/* ============================================================================
+   MAP  - base layer, then two panes so overlap lines always sit on top of
+   project lines regardless of the order we add them.
+   ========================================================================= */
+const map = L.map('map', { center: DATA.center, zoom: DATA.zoom, zoomControl: true });
+
+L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+  maxZoom: 18, attribution: '&copy; OpenStreetMap contributors'
+}).addTo(map);
+
+map.createPane('projects');  map.getPane('projects').style.zIndex = 410;
+map.createPane('overlaps');  map.getPane('overlaps').style.zIndex = 420;
+
+/* ============================================================================
+   PROJECTS  - a line between the two endpoints when both are known, otherwise
+   a single dot at the one endpoint we have. Projects that take part in no
+   overlap are drawn faded so the overlapping ones stand out.
+   ========================================================================= */
+const FADED = 0.18, NORMAL = 0.85;
+const projectLayers = {};   // project_id -> Leaflet layer
+
+DATA.projects.forEach(p => {
+  const color = COLORS[p.group];
+  const layer = (p.a && p.b)
+    ? L.polyline([p.a, p.b], { pane: 'projects', color, weight: 3, opacity: NORMAL })
+    : L.circleMarker(p.a || p.b, { pane: 'projects', radius: 5, color,
+                                   fillColor: color, fillOpacity: 0.9, weight: 2 });
+  layer.bindPopup(projectPopup(p));
+  layer.addTo(map);
+  projectLayers[p.id] = layer;
+});
+
+/* Popup for a project: everything needed to trace it back to the source PDF. */
+function projectPopup(p) {
+  const ends = p.name_b ? `${esc(p.name_a)} &rarr; ${esc(p.name_b)}`
+                        : `${esc(p.name_a || p.name_b)} (single endpoint)`;
+  return `<div class="pop-title">${esc(p.name)}</div>
+    ${row('Project ID', p.id)}
+    ${row('Utility', p.utility)}
+    ${row('Endpoints', ends, true)}
+    ${row('In service', p.date)}
+    ${row('Status', p.status)}
+    ${row('Confidence', confLabel(p.confidence))}
+    ${row('Overlaps', p.overlaps)}
+    <div class="pop-src"><b>Source:</b> ${esc(p.source || 'n/a')}
+      ${p.source_id ? ' &middot; entry ' + esc(p.source_id) : ''}</div>`;
+}
+
+/* ============================================================================
+   OVERLAP PAIRS  - a line between the two project centers. Dashed and amber
+   when at least one side is still an automatic match; solid, thicker and
+   green when both sides are verified.
+   ========================================================================= */
+const overlapLayers = {};   // overlap rank -> Leaflet layer
+
+DATA.overlaps.forEach(o => {
+  const verified = o.confidence === 'verified';
+  const line = L.polyline([o.a_center, o.b_center], {
+    pane: 'overlaps',
+    color: verified ? COLORS.verified : COLORS.needs_check,
+    weight: verified ? 5 : 3,
+    opacity: 0.9,
+    dashArray: verified ? null : '7,6'    // dashed = needs checking
+  });
+  line.bindPopup(overlapPopup(o));
+  line.on('click', () => select(o.rank, false));
+  overlapLayers[o.rank] = line;
+});
+
+function overlapPopup(o) {
+  return `<div class="pop-title">Rank ${o.rank} &middot; score ${o.score.toFixed(3)}</div>
+    ${row('Distance', o.miles.toFixed(2) + ' mi between centers')}
+    ${row('Time gap', o.gap_days + ' days')}
+    ${row('Pair status', o.confidence === 'verified'
+        ? 'Verified on both sides' : 'Needs checking')}
+    <div class="pop-src" style="border-top:none;padding-top:8px;color:var(--ink)">
+      <div><b>${esc(o.a_id)}</b> &middot; ${esc(o.a_util)} &middot; ${esc(o.a_date)}<br>${esc(o.a_name)}</div>
+      <div style="margin-top:6px"><b>${esc(o.b_id)}</b> &middot; ${esc(o.b_util)} &middot; ${esc(o.b_date)}<br>${esc(o.b_name)}</div>
+    </div>`;
+}
+
+/* ============================================================================
+   FILTERS  - the distance slider and the verified-only toggle. Both decide
+   which pairs are visible; a project is only drawn at full strength if it
+   still takes part in a visible pair.
+   ========================================================================= */
+const slider = document.getElementById('miles');
+const miOut  = document.getElementById('miOut');
+const onlyV  = document.getElementById('onlyVerified');
+let selected = null;
+
+function visibleOverlaps() {
+  const maxMi = +slider.value;
+  return DATA.overlaps.filter(o =>
+    o.miles <= maxMi && (!onlyV.checked || o.confidence === 'verified'));
+}
+
+function applyFilters() {
+  miOut.textContent = slider.value;
+  const shown = visibleOverlaps();
+  const live = new Set();                      // projects still in a visible pair
+  shown.forEach(o => { live.add(o.a_id); live.add(o.b_id); });
+
+  // show/hide the overlap lines
+  DATA.overlaps.forEach(o => {
+    const on = shown.includes(o);
+    const layer = overlapLayers[o.rank];
+    if (on && !map.hasLayer(layer)) layer.addTo(map);
+    if (!on && map.hasLayer(layer)) map.removeLayer(layer);
+  });
+
+  // fade the projects that are not involved
+  DATA.projects.forEach(p => {
+    const op = live.has(p.id) ? NORMAL : FADED;
+    const layer = projectLayers[p.id];
+    if (layer.setStyle) layer.setStyle({ opacity: op, fillOpacity: op });
+  });
+
+  renderList(shown);
+}
+
+/* ============================================================================
+   SIDEBAR LIST  - ranked best-first. Clicking a row zooms the map to that pair.
+   ========================================================================= */
+function renderList(shown) {
+  const total = DATA.overlaps.length;
+  const nv = shown.filter(o => o.confidence === 'verified').length;
+  document.getElementById('count').innerHTML =
+    `<b>${shown.length}</b> of ${total} pairs shown &middot; ${nv} verified &middot; ${shown.length - nv} need checking`;
+
+  const list = document.getElementById('list');
+  if (!shown.length) { list.innerHTML = '<div class="empty">No pairs match these filters.</div>'; return; }
+
+  list.innerHTML = shown.map(o => {
+    const color = o.confidence === 'verified' ? COLORS.verified : COLORS.needs_check;
+    return `<div class="item${selected === o.rank ? ' sel' : ''}" data-rank="${o.rank}"
+                 style="border-left-color:${color}">
+      <div class="top"><span>#${o.rank} &middot; score ${o.score.toFixed(3)}</span>
+        <span class="badge" style="background:${color}">${o.confidence === 'verified' ? 'verified' : 'check'}</span></div>
+      <div class="meta">${o.miles.toFixed(2)} mi apart &middot; ${o.gap_days} days between in-service dates</div>
+      <div class="names"><b>${esc(o.a_id)}</b> ${esc(o.a_name)}<br><b>${esc(o.b_id)}</b> ${esc(o.b_name)}</div>
+    </div>`;
+  }).join('');
+
+  list.querySelectorAll('.item').forEach(el =>
+    el.addEventListener('click', () => select(+el.dataset.rank, true)));
+}
+
+/* Zoom to a pair and open its popup. */
+function select(rank, fromList) {
+  selected = rank;
+  const o = DATA.overlaps.find(x => x.rank === rank);
+  const layer = overlapLayers[rank];
+  if (!map.hasLayer(layer)) layer.addTo(map);      // reveal it even if filtered out
+  // animate:false makes this jump straight to the pair. Leaflet's animated
+  // fit depends on a transitionend event that does not always fire, which
+  // left the map sitting at the default zoom; an instant jump always lands.
+  map.fitBounds(L.latLngBounds([o.a_center, o.b_center]).pad(0.6),
+                { maxZoom: 12, animate: false });
+  if (fromList) layer.openPopup();
+  renderList(visibleOverlaps());
+}
+
+/* ============================================================================
+   LEGEND
+   ========================================================================= */
+document.getElementById('legend').innerHTML = `
+  <div class="row"><span class="swatch" style="border-top-color:${COLORS.DESC}"></span> Dominion Energy South Carolina</div>
+  <div class="row"><span class="swatch" style="border-top-color:${COLORS.GPC}"></span> Georgia Power</div>
+  <div class="row"><span class="swatch" style="border-top-color:${COLORS.ITS}"></span> Georgia ITS partners (GTC, MEAG, Dalton)</div>
+  <div class="row" style="margin-top:8px"><span class="swatch" style="border-top-color:${COLORS.verified};border-top-width:5px"></span> Overlap, verified both sides</div>
+  <div class="row"><span class="swatch" style="border-top-color:${COLORS.needs_check};border-top-style:dashed"></span> Overlap, needs checking</div>
+  <div class="row" style="margin-top:8px;color:var(--muted)"><span class="dot" style="background:var(--muted)"></span> Faded = project has no overlap</div>`;
+
+/* ---- helpers ---- */
+function row(k, v, raw) {
+  if (v === null || v === undefined || v === '') return '';
+  return `<div class="pop-row"><span class="k">${k}</span><span>${raw ? v : esc(v)}</span></div>`;
+}
+function confLabel(c) {
+  return ({ sponsor_verified: 'Sponsor verified', manually_verified: 'Manually verified' })[c] || c;
+}
+function esc(s) {
+  return String(s).replace(/[&<>"']/g, c =>
+    ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+}
+
+/* ---- wire up and draw ---- */
+slider.addEventListener('input', applyFilters);
+onlyV.addEventListener('change', applyFilters);
+applyFilters();
+</script>
+</body>
+</html>
