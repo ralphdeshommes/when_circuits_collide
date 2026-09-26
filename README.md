@@ -8,10 +8,19 @@ each other, and ranks them as coordination opportunities.
 
 ## How to read the map
 
-* Pick a card in the ranked list. The map draws a **25-mile circle centred on the Dominion project**
-  (blue). A Georgia Power project (orange) whose centre is inside the circle overlaps it. The two
-  projects are labelled with their company name, and a red line shows the distance between the centres.
-* Other Georgia Power projects inside the same circle are drawn too, so you can see what crosses it.
+* **Click a red overlap point** on the map (or any red-glowing project, or a card in the ranked list).
+  That overlap is highlighted in red, every other project fades out and stops being clickable, and a
+  card compares the two projects side by side: in-service date, status, voltage, route, estimated cost
+  and location quality, plus the overlap numbers (distance, time gap, shared corridor, land and cost
+  avoided). Georgia Power's cost shows as *not published* because the IRP redacts it. Press **Esc** (or
+  the x on the card) to get everything back; the other red points stay clickable while one is selected.
+* The **overlap point** is where the two projects cross, or, if they do not cross, the spot midway
+  between the places where they come closest. When two lines run together for a stretch (a shared
+  corridor) that stretch is drawn in red too.
+* The map also draws a **25-mile circle centred on the Dominion project** (blue). A Georgia Power project
+  (orange) whose centre is inside the circle overlaps it. A red line shows the distance between the centres.
+* Other Georgia Power projects inside the same circle are hidden while a pair is isolated; tick *show the
+  others on the map* in the card to draw them (numbered).
 * Red glow around a project = it takes part in an overlap. Dotted line = low-confidence location.
 * Filters: maximum distance, time gap, location quality. Tick *draw the 25-mile circle for every
   overlapping Dominion project* to see all the circles at once.
