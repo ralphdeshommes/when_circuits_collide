@@ -75,7 +75,11 @@
   .est-tag { font-size: 9.5px; text-transform: uppercase; letter-spacing: .4px;
              background: #2b6a3f; color: #fff; border-radius: 8px; padding: 1px 6px; }
   .est-num { font-size: 16px; font-weight: 700; margin: 3px 0 4px; color: var(--ink); }
+  .est-basis { font-size: 10.5px; color: var(--muted); margin-bottom: 6px; }
   .est-why { font-size: 11.5px; line-height: 1.4; }
+  .est-retro { font-size: 11px; line-height: 1.4; margin-top: 6px; padding: 5px 7px;
+               background: #fdf6e3; border: 1px solid #ecdcb0; border-radius: 4px;
+               color: #7a5c17; }
   .est-caveat { font-size: 10.5px; line-height: 1.35; color: var(--muted);
                 margin-top: 5px; padding-top: 5px; border-top: 1px solid #cfe8d8; }
 
@@ -224,7 +228,9 @@ function estimateBlock(o) {
     <div class="est-head">Coordination opportunity
       <span class="est-tag">illustrative</span></div>
     <div class="est-num">${esc(e.range)}</div>
+    <div class="est-basis">${esc(e.basis)}</div>
     <div class="est-why">${esc(e.note)}</div>
+    <div class="est-retro">${esc(e.retro)}</div>
     <div class="est-caveat">${esc(e.caveat)}</div>
   </div>`;
 }

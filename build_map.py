@@ -22,21 +22,25 @@ import pandas as pd
 # Coordination estimate (bonus deliverable). Keyed by the two project ids, so
 # the note only ever attaches to the pair it was written for.
 #
-# ILLUSTRATIVE ONLY. No cost figure for either project exists in our data: the
-# DESC source document is titled "$2M+", which is a floor and not a number, and
-# Georgia Power redacts per-project costs in its IRP. The range below is built
-# from assumptions documented step by step in ESTIMATE.md. If you obtain the
-# real DESC_23 budget, put it in ESTIMATE.md step 1 and update RANGE here.
+# ILLUSTRATIVE. The cost basis is real -- DESC_23's $23,787,423 is published in
+# the DESC PDF and now lives in projects.csv under the `cost` column -- but the
+# savings percentages applied to it are assumptions, documented step by step in
+# ESTIMATE.md. Georgia Power redacts per-project costs in its public IRP, so the
+# range counts the DESC side only and the true total is higher by an unknown
+# amount. Keyed on both project ids so it attaches to that pair alone.
 # ---------------------------------------------------------------------------
 ESTIMATES = {
     ("DESC_23", "GPC_20277"): {
-        "range": "~$190K - $2.6M",
+        "range": "~$360K - $1.5M",
+        "basis": "DESC_23 cost $23,787,423 (published, $3.66M/mi over 6.5 mi)",
         "note": ("Two 230 kV jobs 5.65 mi apart with in-service dates 152 days "
                  "apart. One crew mobilisation, one laydown yard and one set of "
                  "right-of-way and survey visits could serve both instead of two."),
-        "caveat": ("Illustrative order of magnitude, not a claimed saving. Built on "
-                   "assumed costs - see ESTIMATE.md. Savings fall to near zero if "
-                   "neither schedule can move."),
+        "caveat": ("DESC side only - Georgia Power redacts its project costs, so its "
+                   "share is real but not quantifiable. Savings percentages are "
+                   "assumptions; see ESTIMATE.md."),
+        "retro": ("Retrospective: DESC_23's 2025-12-31 in-service date has passed. "
+                  "Our tool would have flagged this pair before construction."),
     },
 }
 
