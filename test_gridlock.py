@@ -256,6 +256,15 @@ try {
   out.count_default = el('listcount').textContent.trim();
   out.paths = document.querySelectorAll('path').length;
 
+  // Type: identifiers in mono, and a system fallback so the page still reads
+  // the same when the font cannot be fetched.
+  const bodyFont = getComputedStyle(document.body).fontFamily;
+  out.type_body_stack = bodyFont;
+  out.type_has_fallback = /system-ui|-apple-system|sans-serif/.test(bodyFont);
+  const idEl = document.querySelector('.rank') || document.querySelector('.mono');
+  out.type_id_is_mono = idEl ? /mono/i.test(getComputedStyle(idEl).fontFamily) : null;
+  out.type_tabular = getComputedStyle(document.body).fontVariantNumeric;
+
   // The ranked list must be reachable without scrolling past the map key.
   const topOf = sel => Math.round(document.querySelector(sel).getBoundingClientRect().top);
   out.side_list_top = topOf('#listhead');
@@ -489,6 +498,13 @@ def test_map():
           "from 55 pairs" in r["count_default"], r["count_default"])
     # The ranked list is the deliverable, so it must be visible in the sidebar
     # without scrolling past the map key, which is long and read once.
+    check("identifiers are set in a monospace face", r.get("type_id_is_mono"),
+          r.get("type_body_stack"))
+    check("the type stack falls back to the system font",
+          r.get("type_has_fallback"), r.get("type_body_stack"))
+    check("figures are tabular so columns line up",
+          "tabular-nums" in (r.get("type_tabular") or ""), r.get("type_tabular"))
+
     check("the ranked list sits above the map key", r.get("side_list_above_key"),
           (r.get("side_list_top"), r.get("side_key_top")))
     check("the map key is folded away by default", r.get("side_key_collapsed"))

@@ -4,6 +4,9 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Gridlock - Utility Overlap Map</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;600&family=IBM+Plex+Sans:wght@400;600;700&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
 <style>
@@ -15,7 +18,16 @@
   }
   * { box-sizing: border-box; }
   html, body { height: 100%; margin: 0; }
-  body { font: 14px/1.45 system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; color: var(--ink); background: var(--bg); }
+  /* IBM Plex Sans for the interface, Plex Mono for anything that is really data.
+     Both fall back to the system stack, so with no network the page renders
+     exactly as it did before. tabular-nums keeps figures in a column aligned. */
+  body { font: 14px/1.45 "IBM Plex Sans", system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+         color: var(--ink); background: var(--bg); font-variant-numeric: tabular-nums; }
+  .mono, .fig, .rank, .numchip, .hid, .hcount {
+    font-family: "IBM Plex Mono", ui-monospace, SFMono-Regular, Menlo, monospace;
+    font-variant-numeric: tabular-nums; }
+  .fig { letter-spacing: -.01em; }
+  .money { font-variant-numeric: tabular-nums; font-weight: 600; }
   #app { display: grid; grid-template-columns: 410px 1fr; height: 100vh; }
   #side { background: var(--panel); border-right: 1px solid var(--line); display: flex; flex-direction: column; min-height: 0; }
   #mapwrap { position: relative; height: 100%; min-height: 320px; }
@@ -227,7 +239,7 @@ let selected = null, selectedProject = null, visible = [], items = [];
 function popup(p, noTitle) {
   const ovs = DATA.overlaps.concat(DATA.partners).filter(o => o.a === p.id || o.b === p.id).map(o => o.id);
   return `${noTitle ? '' : `<div class="pop-t">${esc(p.name)}</div>`}
-    <div class="pop-m">${esc(p.util)}${p.sponsor && p.sponsor !== 'GPC' ? ' &middot; sponsor ' + esc(p.sponsor) : ''} &middot; ${esc(p.id)}</div>
+    <div class="pop-m">${esc(p.util)}${p.sponsor && p.sponsor !== 'GPC' ? ' &middot; sponsor ' + esc(p.sponsor) : ''} &middot; <span class="mono">${esc(p.id)}</span></div>
     <div>In service: <b>${fmtDate(p.date)}</b>${p.status ? ' &middot; ' + esc(p.status) : ''}</div>
     ${p.cost ? `<div>Estimated cost: <b>${money(p.cost)}</b></div>` : ''}
     <div>Location: <b>${esc(p.conf)}</b> confidence${p.notes ? ' &mdash; ' + esc(p.notes) : ''}</div>
@@ -318,10 +330,10 @@ function relatedHtml(o) {
   const r = relatedTo(o);
   const inside = insideList(o);
   const otherDom = visible.filter(x => x.groupB === o.groupB && x.groupA !== o.groupA);
-  const list = inside.map((x, i) => `<div><a href="#" data-go="${esc(x.id)}"><span class="numchip">${i + 1}</span></a> ${esc(x.nameB)} &middot; ${x.dist.toFixed(1)} mi${i === 0 ? ' &middot; <b>selected pair</b>' : ''}</div>`).join('');
+  const list = inside.map((x, i) => `<div><a href="#" data-go="${esc(x.id)}"><span class="numchip">${i + 1}</span></a> ${esc(x.nameB)} &middot; <span class="fig">${x.dist.toFixed(1)} mi</span>${i === 0 ? ' &middot; <b>selected pair</b>' : ''}</div>`).join('');
   const sib = r.siblings.length ? `<div class="pop-m" style="margin-top:6px">Same corridor, merged into this row: ${r.siblings.map(id => esc(id) + ' ' + esc(byId[id] ? byId[id].name : '')).join('; ')}</div>` : '';
   const dom = otherDom.length ? `<div class="pop-m" style="margin-top:6px">Other Dominion projects near the same Georgia project:</div>` +
-    otherDom.slice(0, 4).map(x => `<div><a href="#" data-go="${esc(x.id)}">${esc(x.id)}</a> &middot; ${x.dist.toFixed(1)} mi &middot; ${esc(x.nameA)}</div>`).join('') : '';
+    otherDom.slice(0, 4).map(x => `<div><a href="#" data-go="${esc(x.id)}">${esc(x.id)}</a> &middot; <span class="fig">${x.dist.toFixed(1)} mi</span> &middot; ${esc(x.nameA)}</div>`).join('') : '';
   return `<div class="rel"><b>Georgia Power projects inside this circle</b> <span class="pop-m">(numbers match the map)</span>${list}${sib}${dom}</div>`;
 }
 
@@ -383,7 +395,7 @@ function renderList() {
                       r.others.length ? `${r.others.length} other nearby pair${r.others.length > 1 ? 's' : ''}` : ''].filter(Boolean) : [];
     return `
     <div class="card${selected === o.id ? ' sel' : ''}" role="button" tabindex="0" data-id="${esc(o.id)}">
-      <div class="top"><span><span class="rank">#${i + 1}</span>${o.dist.toFixed(1)} mi &middot; ${o.gap} days apart</span><span class="badge ${esc(o.conf)}">${esc(o.conf)}</span></div>
+      <div class="top"><span><span class="rank">#${i + 1}</span><span class="fig">${o.dist.toFixed(1)} mi &middot; ${o.gap} days</span> apart</span><span class="badge ${esc(o.conf)}">${esc(o.conf)}</span></div>
       <div class="nm"><span class="d">Dominion</span> ${esc(o.nameA)}<br><span class="g">${o.sponsor === 'GPC' || o.sponsor === 'SAV' ? 'Georgia Power' : 'Georgia ' + esc(o.sponsor)}</span> ${esc(o.nameB)}</div>
       <div class="meta">${esc(o.why)}</div>
       ${bits.length ? `<div class="meta">${bits.join(' &middot; ')}</div>` : ''}
@@ -570,7 +582,7 @@ function selectProject(id, fly) {
 
 function renderProjectPanel(p, near) {
   const dom = isDominion(p), who = dom ? 'Dominion' : 'Georgia Power', other = dom ? 'Georgia Power' : 'Dominion', el = document.getElementById('detail');
-  const list = near.map((x, i) => `<div><a href="#" data-go="${esc(x.q.id)}"><span class="numchip${dom ? '' : ' dom'}">${i + 1}</span></a> ${esc(x.q.name)} &middot; <b>${x.dist.toFixed(1)} mi</b>${x.gap == null ? '' : ' &middot; ' + Math.round(x.gap) + ' days apart'}${x.q.conf === 'low' ? ' &middot; low-confidence location' : ''}</div>`).join('');
+  const list = near.map((x, i) => `<div><a href="#" data-go="${esc(x.q.id)}"><span class="numchip${dom ? '' : ' dom'}">${i + 1}</span></a> ${esc(x.q.name)} &middot; <b class="fig">${x.dist.toFixed(1)} mi</b>${x.gap == null ? '' : ' &middot; ' + Math.round(x.gap) + ' days apart'}${x.q.conf === 'low' ? ' &middot; low-confidence location' : ''}</div>`).join('');
   el.style.display = 'block';
   el.innerHTML = panelHeader(esc(p.name)) + `
     <div class="pop-m">${who} project &middot; the centre of the 25-mile circle</div>
@@ -611,8 +623,8 @@ function renderDetail(o, a, b) {
   el.innerHTML = panelHeader(`${esc(o.id)} &middot; ${o.dist.toFixed(1)} mi apart &middot; ${o.gap} days`) + `
     ${timeline(a, b)}
     <table>
-      <tr><td><span style="color:${COL.desc};font-weight:700">Dominion</span></td><td>${esc(a.name)}<br><span class="pop-m">${esc(a.id)} &middot; ${fmtDate(a.date)}${a.cost ? ' &middot; ' + money(a.cost) : ''}</span></td></tr>
-      <tr><td><span style="color:${COL.gpc};font-weight:700">Georgia</span></td><td>${esc(b.name)}<br><span class="pop-m">${esc(b.id)} &middot; ${fmtDate(b.date)}${b.sponsor && b.sponsor !== 'GPC' ? ' &middot; sponsor ' + esc(b.sponsor) : ''}</span></td></tr>
+      <tr><td><span style="color:${COL.desc};font-weight:700">Dominion</span></td><td>${esc(a.name)}<br><span class="pop-m"><span class="mono">${esc(a.id)}</span> &middot; ${fmtDate(a.date)}${a.cost ? ' &middot; <span class="money">' + money(a.cost) + '</span>' : ''}</span></td></tr>
+      <tr><td><span style="color:${COL.gpc};font-weight:700">Georgia</span></td><td>${esc(b.name)}<br><span class="pop-m"><span class="mono">${esc(b.id)}</span> &middot; ${fmtDate(b.date)}${b.sponsor && b.sponsor !== 'GPC' ? ' &middot; sponsor ' + esc(b.sponsor) : ''}</span></td></tr>
       <tr><td>Radius test</td><td>the Georgia Power project's centre is <b>${o.dist.toFixed(1)} mi</b> from the Dominion project's centre, so it is <b>inside</b> the 25-mile circle</td></tr>
       <tr><td>Location check</td><td><span class="badge ${esc(o.conf)}">${esc(o.conf)}</span> ${esc([a.notes, b.notes].filter(Boolean).join(' | ')) || 'both end points matched to named substations'}</td></tr>
       <tr><td>Score</td><td>${o.score.toFixed(2)} (70% distance, 30% schedule) &middot; ranked ${o.rscore.toFixed(2)} after location confidence</td></tr>
