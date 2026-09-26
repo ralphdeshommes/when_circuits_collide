@@ -391,7 +391,8 @@ function renderList() {
 }
 
 function select(id, fromList) {
-  selected = id; selectedProject = null;
+  selected = id;
+  setFold(false);                       // picking an item means you want to read it selectedProject = null;
   const o = visible.find(x => x.id === id); if (!o) return;
   drawSelection(o, true);
   renderList();
@@ -514,6 +515,7 @@ function clearSelection() {
 
 function selectProject(id, fly) {
   const p = byId[id]; if (!p || !p.c) return;
+  setFold(false);                       // picking an item means you want to read it
   selected = null; selectedProject = id;
   renderList();                                   // no card is highlighted while a project is the centre
   if (p.conf === 'none') {

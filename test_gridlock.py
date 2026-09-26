@@ -352,9 +352,10 @@ try {
   out.dim_folded = getComputedStyle(map.getPane('overlaps')).opacity;
   dc.click();                                   // clicking the folded bar reopens it
   out.fold_reexpanded = !dc.classList.contains('folded');
-  dc.querySelector('.fold').click();            // fold again, then pick another pair
+  dc.querySelector('.fold').click();            // fold, then pick another pair
   document.querySelectorAll('.card')[1].click();
-  out.fold_sticky = dc.classList.contains('folded');
+  out.fold_reopens_on_pick = !dc.classList.contains('folded');
+  out.fold_pick_shows_body = getComputedStyle(dc.querySelector('.dbody')).display !== 'none';
   out.fold_new_title = dc.querySelector('h3').textContent.trim();
   out.fold_new_drawn = layerSel.getLayers().length > 0;
   setFold(false);
@@ -561,7 +562,11 @@ def test_map():
           and r.get("fold_still_selected", "null") != "null",
           (r.get("fold_layers_kept"), r.get("fold_layers_open")))
     check("clicking the folded bar reopens it", r.get("fold_reexpanded"))
-    check("the fold choice sticks when another pair is picked", r.get("fold_sticky"))
+    # Folding must not swallow the next selection: picking an item is a request
+    # to read it, so the card reopens rather than staying a title bar.
+    check("picking another pair reopens the folded card",
+          r.get("fold_reopens_on_pick"))
+    check("and its details are actually shown", r.get("fold_pick_shows_body"))
     check("a pair picked while folded is still drawn on the map", r.get("fold_new_drawn"))
     check("hover readout panel exists", r.get("hover_box_exists"))
     check("hover panel hidden until the cursor is over a circle",
