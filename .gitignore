@@ -7,3 +7,4 @@ __pycache__/
 !/data/osm_power.json
 !/data/nominatim_cache.json
 !/data/state_borders.json
+.venv/
