@@ -293,6 +293,22 @@ try {
   out.detail = (document.querySelector('#detail') || document.body).textContent.slice(0, 600);
   out.selected_on_load = SELECTED_ON_LOAD;
 
+  // ---- click any project to re-centre the 25-mile circle (his feature) ----
+  const gpc = DATA.projects.find(p => p.c && p.util === 'Georgia Power');
+  const dom = DATA.projects.find(p => p.c && p.util.startsWith('Dominion'));
+  selectProject(gpc.id, false);
+  out.recentre_gpc_panel = el('detail').textContent.slice(0, 200);
+  out.recentre_gpc_drawn = layerSel.getLayers().length > 0;
+  out.recentre_gpc_ring = rings.some(r => r.kind === 'sel' && r.p.id === gpc.id);
+  selectProject(dom.id, false);
+  out.recentre_dom_ring = rings.some(r => r.kind === 'sel' && r.p.id === dom.id);
+  out.recentre_dom_panel = el('detail').textContent.slice(0, 200);
+  // a project with two located end points draws as a line, one end point as a marker
+  const twoEnds = DATA.projects.find(p => p.a && p.b);
+  const oneEnd = DATA.projects.find(p => p.c && !(p.a && p.b));
+  out.geom_two_ends = !!twoEnds; out.geom_one_end = !!oneEnd;
+  document.querySelector('.card').click();
+
   // ---- the detail card folds away without losing the selection ----
   const dc = el('detail');
   out.fold_open_on_load = dc.style.display !== 'none';
@@ -360,7 +376,7 @@ try {
       out.hover_no_thinning = rings.every(r => r.layer.options.weight >= r.base.weight);
       out.hover_weights = rings.map(r => [r.base.weight, r.layer.options.weight]);
       // every Georgia project the panel counts must really be in range of all hits
-      const shared = sharedGeorgia(hits);
+      const shared = sharedProjects(hits).list;
       out.hover_shared_ok = shared.every(g =>
         hits.every(r => map.distance(L.latLng(g.c), L.latLng(r.p.c)) <= RADIUS_MI * MILE_M));
       out.hover_shared_n = shared.length;
@@ -477,6 +493,18 @@ def test_map():
     # containment is computed from the cursor instead.
     # The detail card sits over the map, so it must be foldable without losing
     # the selection drawn underneath it.
+    # His click-to-recentre: the 25-mile test runs from either company's project,
+    # not only from a Dominion one.
+    check("clicking a Georgia Power project re-centres the circle on it",
+          r.get("recentre_gpc_ring") and r.get("recentre_gpc_drawn"))
+    check("clicking a Dominion project re-centres the circle on it",
+          r.get("recentre_dom_ring"))
+    check("the re-centred panel names the circle it drew",
+          "25-mile circle" in (r.get("recentre_gpc_panel") or ""),
+          (r.get("recentre_gpc_panel") or "")[:80])
+    check("both a two-endpoint and a single-endpoint project exist to draw",
+          r.get("geom_two_ends") and r.get("geom_one_end"))
+
     check("the collapse button is visible with a usable hit target",
           r.get("fold_btn_visible") and min(r.get("fold_btn_size", [0, 0])) > 12,
           r.get("fold_btn_size"))
@@ -523,7 +551,7 @@ def test_map():
     check("every circle under the cursor is highlighted",
           r.get("hover_highlighted") == r.get("hover_hits_multi"),
           (r.get("hover_highlighted"), r.get("hover_hits_multi")))
-    check("Georgia projects counted are inside all hovered circles",
+    check("projects counted are inside all hovered circles",
           r.get("hover_shared_ok"), r.get("hover_shared_n"))
     if r.get("hover_solo_text"):
         check("a single circle reads as one, not as an intersection",

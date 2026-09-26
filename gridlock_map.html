@@ -51,8 +51,33 @@
   .meta { color: var(--muted); font-size: 11.5px; margin-top: 5px; }
   #detail { position: absolute; right: 14px; bottom: 26px; width: 390px; max-width: calc(100% - 28px); max-height: 56%; overflow-y: auto; z-index: 800;
     background: #fff; border: 1px solid var(--line); border-radius: 12px; box-shadow: 0 8px 28px rgba(20,30,45,.22); padding: 12px 14px; display: none; }
-  #detail .x { position: absolute; top: 6px; right: 8px; border: 0; background: transparent; font-size: 20px; line-height: 1; cursor: pointer; color: var(--muted); }
-  #detail h3 { padding-right: 22px; }
+  /* hover readout: top-right, clear of #detail which sits bottom-right */
+  #hoverinfo { position: absolute; right: 58px; top: 14px; width: 270px; max-width: calc(100% - 28px);
+               z-index: 801; background: var(--panel); border: 1px solid var(--line); border-radius: 8px;
+               box-shadow: 0 4px 16px rgba(0,0,0,.13); padding: 10px 12px; pointer-events: none; }
+  #hoverinfo .ht { font-size: 12px; font-weight: 700; }
+  #hoverinfo .hs { font-size: 11px; color: var(--muted); margin-top: 1px; }
+  #hoverinfo .hrow { font-size: 11.5px; margin-top: 6px; line-height: 1.35; }
+  #hoverinfo .hid { font-weight: 700; }
+  #hoverinfo .hsplit { margin-top: 8px; padding-top: 7px; border-top: 1px solid var(--line); }
+  #hoverinfo .hcount { font-size: 15px; font-weight: 700; }
+  #hoverinfo .hcost { font-size: 13px; font-weight: 700; }
+  #hoverinfo.two { border-color: #c9a227; box-shadow: 0 4px 16px rgba(201,162,39,.22); }
+
+  /* the card folds down to its title bar so it stops covering the map, without
+     losing the selection drawn underneath */
+  #detail .dbar { display: flex; align-items: center; gap: 2px; }
+  #detail .dbar h3 { margin: 0; flex: 1; min-width: 0; }
+  #detail .fold { flex: 0 0 auto; background: none; border: 0; cursor: pointer; color: var(--muted);
+                  width: 26px; height: 26px; display: inline-flex; align-items: center;
+                  justify-content: center; border-radius: 5px; font-size: 18px; font-weight: 600;
+                  line-height: 1; }
+  #detail .fold:hover { background: #eef1f5; color: var(--ink); }
+  #detail.folded { width: auto; max-width: min(340px, calc(100% - 28px)); max-height: none;
+                   overflow: visible; padding-bottom: 8px; cursor: pointer; }
+  #detail.folded .dbody { display: none; }
+  #detail.folded .dbar h3 { font-size: 12.5px; white-space: nowrap; overflow: hidden;
+                            text-overflow: ellipsis; }
   #detail h3 { margin: 0 0 6px; font-size: 14px; }
   #detail table { width: 100%; border-collapse: collapse; font-size: 12.5px; }
   #detail td { padding: 3px 0; vertical-align: top; } #detail td:first-child { color: var(--muted); width: 42%; }
@@ -63,7 +88,7 @@
   .leaflet-popup-content { font-size: 12.5px; line-height: 1.45; }
   .pop-t { font-weight: 700; margin-bottom: 2px; } .pop-m { color: #5d6a7a; }
   .gap-label { background: #fff; border: 1px solid var(--ovl); color: var(--ovl); border-radius: 4px; padding: 0 4px; font-weight: 700; font-size: 11px; white-space: nowrap; }
-  .legend i.ring { width: 12px; height: 12px; border: 2px dashed var(--desc); border-radius: 50%; background: rgba(31,95,191,.10); }
+  .legend i.ring { width: 12px; height: 12px; border: 2px solid var(--desc); border-radius: 50%; background: rgba(31,95,191,.10); }
   .rad-label { color: var(--desc); font-weight: 700; font-size: 11.5px; background: rgba(255,255,255,.88); padding: 1px 7px; border-radius: 4px; white-space: nowrap; }
   .leaflet-tooltip.tip { font-weight: 700; font-size: 11.5px; white-space: normal; width: max-content; max-width: 240px; border: 2px solid; padding: 3px 7px; }
   .leaflet-tooltip.tip-desc { color: var(--desc); border-color: var(--desc); }
@@ -143,6 +168,7 @@
   </aside>
   <main id="mapwrap">
     <div id="map" aria-label="Map of planned projects"></div>
+    <div id="hoverinfo" aria-live="polite" hidden></div>
     <section id="detail" aria-live="polite"></section>
   </main>
 </div>
@@ -171,6 +197,13 @@ map.createPane('selected').style.zIndex = 470;      // the selected pair sits ab
 const layerProjects = L.layerGroup().addTo(map);
 const layerOverlaps = L.layerGroup().addTo(map);
 const layerSel = L.layerGroup().addTo(map);
+
+// Every 25-mile circle currently drawn, so the hover readout can tell which ones
+// the cursor is inside. Leaflet's own mouseover fires only for the topmost
+// shape, which is exactly the case that matters -- circles that intersect -- so
+// containment is worked out from the cursor position instead.
+const MILE_M = 1609.34, RADIUS_MI = 25;
+let rings = [];
 let selected = null, selectedProject = null, visible = [], items = [];
 
 function popup(p, noTitle) {
@@ -281,6 +314,7 @@ function render() {
   document.getElementById('miles-out').textContent = document.getElementById('miles').value + ' mi';
   const inOv = new Set(); visible.forEach(o => { inOv.add(o.a); inOv.add(o.b); });
   layerProjects.clearLayers(); layerOverlaps.clearLayers(); layerSel.clearLayers();
+  rings = [];
   map.getPane('overlaps').style.opacity = 1;
   const showAll = document.getElementById('showall').checked;
   const showPartners = document.getElementById('partners').checked;
@@ -291,7 +325,8 @@ function render() {
   });
   if (document.getElementById('radii').checked) {      // optional: the 25-mile circle for every overlapping Dominion project
     DATA.projects.filter(p => inOv.has(p.id) && p.util.startsWith('Dominion')).forEach(p =>
-      L.circle(p.c, {radius: 25 * 1609.34, color: COL.desc, weight: 1.2, dashArray: '4 6', fillColor: COL.desc, fillOpacity: .04, interactive: false}).addTo(layerOverlaps));
+      rings.push({kind: 'all', p: p, base: {weight: 2, fillOpacity: .04},
+        layer: L.circle(p.c, {radius: 25 * 1609.34, color: COL.desc, weight: 2, dashArray: '6 7', fillColor: COL.desc, fillOpacity: .04, interactive: false}).addTo(layerOverlaps)}));
   }
   const nD = DATA.projects.filter(p => p.util.startsWith('Dominion') && p.c).length;
   const nG = DATA.projects.filter(p => p.util === 'Georgia Power' && p.c && (showPartners || ['GPC', 'SAV'].includes(p.sponsor))).length;
@@ -352,7 +387,9 @@ function drawSelection(o, fly) {
   map.getPane('overlaps').style.opacity = .28;        // fade everything else so the selection stands out
   // the overlap test, drawn: a 25-mile circle around the Dominion project's centre.
   // A Georgia Power project whose centre falls inside the circle is an overlap.
-  const ring = L.circle(a.c, {radius: 25 * 1609.34, color: COL.desc, weight: 2.5, dashArray: '8 7', fillColor: COL.desc, fillOpacity: .07, interactive: false}).addTo(layerSel);
+  const ring = L.circle(a.c, {radius: 25 * 1609.34, color: COL.desc, weight: 5, fillColor: COL.desc, fillOpacity: .07, interactive: false}).addTo(layerSel);
+  rings = rings.filter(r => r.kind !== 'sel');
+  rings.push({kind: 'sel', p: a, layer: ring, base: {weight: 5, fillOpacity: .07}});
   // every Georgia Power project inside the same circle; each gets a numbered badge (1 = the selected pair)
   const inside = insideList(o);
   inside.forEach((x, i) => { const g = byId[x.b]; if (g && i > 0) drawProject(g, layerSel, {weight: 4, opacity: .95, pane: 'selected'}); });
@@ -403,10 +440,51 @@ function neighboursOf(p) {
     .sort((x, y) => x.dist - y.dist);
 }
 
+// Every panel that appears in #detail uses the same title bar: a heading and a
+// single control that folds the card away. There is no close button -- something
+// is always selected, and folding is what people actually want, so the card gets
+// out of the way without discarding the selection drawn on the map.
+function panelHeader(titleHtml) {
+  return `<div class="dbar"><h3>${titleHtml}</h3>
+    <button class="fold" aria-label="Collapse details" aria-expanded="true" title="Collapse">&minus;</button>
+  </div><div class="dbody">`;
+}
+
+let detailFolded = false;
+
+function applyFold(el) {
+  el.classList.toggle('folded', detailFolded);
+  const b = el.querySelector('.fold');
+  if (!b) return;
+  b.innerHTML = detailFolded ? '&plus;' : '&minus;';
+  b.title = detailFolded ? 'Expand' : 'Collapse';
+  b.setAttribute('aria-label', detailFolded ? 'Expand details' : 'Collapse details');
+  b.setAttribute('aria-expanded', String(!detailFolded));
+}
+
+function setFold(v) {
+  detailFolded = v;
+  const el = document.getElementById('detail');
+  applyFold(el);
+  // Selecting dims the rest of the map so the selection stands out; while the
+  // card is folded the point is to see the map, so lift the dimming.
+  const anySelection = selected || selectedProject;
+  map.getPane('overlaps').style.opacity = (v || !anySelection) ? 1 : .28;
+}
+
+function wirePanel(el) {
+  applyFold(el);
+  const b = el.querySelector('.fold');
+  if (b) b.addEventListener('click', e => { e.stopPropagation(); setFold(!detailFolded); });
+  el.addEventListener('click', () => { if (detailFolded) setFold(false); });
+}
+
 function clearSelection() {
   selected = null; selectedProject = null;
   document.getElementById('detail').style.display = 'none';
-  layerSel.clearLayers(); map.getPane('overlaps').style.opacity = 1; renderList();
+  layerSel.clearLayers(); rings = rings.filter(r => r.kind !== 'sel');
+  if (typeof clearHover === 'function') clearHover();
+  map.getPane('overlaps').style.opacity = 1; renderList();
 }
 
 function selectProject(id, fly) {
@@ -417,15 +495,17 @@ function selectProject(id, fly) {
     layerSel.clearLayers();
     const el = document.getElementById('detail');
     el.style.display = 'block';
-    el.innerHTML = `<button class="x" aria-label="Close details">&times;</button><h3>${esc(p.name)}</h3>
-      <div class="rel">No location could be found for this project, so it cannot be compared.</div>`;
-    el.querySelector('.x').addEventListener('click', clearSelection);
+    el.innerHTML = panelHeader(esc(p.name)) +
+      `<div class="rel">No location could be found for this project, so it cannot be compared.</div></div>`;
+    wirePanel(el);
     return;
   }
   const near = neighboursOf(p), dom = isDominion(p), col = dom ? COL.desc : COL.gpc, who = dom ? 'Dominion' : 'Georgia Power';
   layerSel.clearLayers();
   map.getPane('overlaps').style.opacity = .28;    // fade everything else so the selection stands out
-  const ring = L.circle(p.c, {radius: 25 * 1609.34, color: col, weight: 2.5, dashArray: '8 7', fillColor: col, fillOpacity: .07, interactive: false}).addTo(layerSel);
+  const ring = L.circle(p.c, {radius: 25 * 1609.34, color: col, weight: 5, fillColor: col, fillOpacity: .07, interactive: false}).addTo(layerSel);
+  rings = rings.filter(r => r.kind !== 'sel');
+  rings.push({kind: 'sel', p: p, layer: ring, base: {weight: 5, fillOpacity: .07}});
   near.forEach(x => {
     L.polyline([p.c, x.q.c], {pane: 'selected', color: COL.ovl, weight: 1.5, opacity: .8, interactive: false}).addTo(layerSel);   // centre-to-centre distance
     drawProject(x.q, layerSel, {weight: 4, opacity: .95, pane: 'selected'});
@@ -451,13 +531,13 @@ function renderProjectPanel(p, near) {
   const dom = isDominion(p), who = dom ? 'Dominion' : 'Georgia Power', other = dom ? 'Georgia Power' : 'Dominion', el = document.getElementById('detail');
   const list = near.map((x, i) => `<div><a href="#" data-go="${esc(x.q.id)}"><span class="numchip${dom ? '' : ' dom'}">${i + 1}</span></a> ${esc(x.q.name)} &middot; <b>${x.dist.toFixed(1)} mi</b>${x.gap == null ? '' : ' &middot; ' + Math.round(x.gap) + ' days apart'}${x.q.conf === 'low' ? ' &middot; low-confidence location' : ''}</div>`).join('');
   el.style.display = 'block';
-  el.innerHTML = `<button class="x" aria-label="Close details">&times;</button><h3>${esc(p.name)}</h3>
+  el.innerHTML = panelHeader(esc(p.name)) + `
     <div class="pop-m">${who} project &middot; the centre of the 25-mile circle</div>
     <div class="rel"><b>${near.length ? `${near.length} ${other} project${near.length > 1 ? 's' : ''} inside this circle` : `No ${other} project inside this circle`}</b>
       <span class="pop-m">(centre to centre${near.length ? '; numbers match the map, click one to make it the centre' : ''})</span>${list}</div>
-    <div class="rel">${popup(p, true)}</div>`;
+    <div class="rel">${popup(p, true)}</div></div>`;
   el.querySelectorAll('[data-go]').forEach(a => a.addEventListener('click', e => { e.preventDefault(); selectProject(a.dataset.go, false); }));
-  el.querySelector('.x').addEventListener('click', clearSelection);
+  wirePanel(el);
 }
 
 function timeline(a, b) {
@@ -487,7 +567,7 @@ function renderDetail(o, a, b) {
     est = `<tr><td>Corridor sharing</td><td>no shared corridor or site (closest points ${o.minsep.toFixed(1)} mi apart); coordination would be scheduling, crews and equipment</td></tr>`;
   }
   el.style.display = 'block';
-  el.innerHTML = `<button class="x" aria-label="Close details">&times;</button><h3>${esc(o.id)} &middot; ${o.dist.toFixed(1)} mi apart &middot; ${o.gap} days</h3>
+  el.innerHTML = panelHeader(`${esc(o.id)} &middot; ${o.dist.toFixed(1)} mi apart &middot; ${o.gap} days`) + `
     ${timeline(a, b)}
     <table>
       <tr><td><span style="color:${COL.desc};font-weight:700">Dominion</span></td><td>${esc(a.name)}<br><span class="pop-m">${esc(a.id)} &middot; ${fmtDate(a.date)}${a.cost ? ' &middot; ' + money(a.cost) : ''}</span></td></tr>
@@ -498,10 +578,111 @@ function renderDetail(o, a, b) {
       ${est}
     </table>
     ${relatedHtml(o)}
-    <div class="assume">Estimate assumptions: ROW widths ${Object.entries(A.rowWidth).map(([k, v]) => k + ' kV=' + v + ' ft').join(', ')}; a second line beside an existing one adds ${Math.round(A.extra * 100)}% width; joint delivery avoids ${Math.round(A.lowPct * 100)}-${Math.round(A.highPct * 100)}% of the shared cost (a shared site counts ${Math.round(A.siteShare * 100)}% of the Dominion project cost), faded to zero as the schedule gap reaches ${(A.taper / 365).toFixed(0)} years. Lines are drawn straight between their two substations.</div>`;
+    <div class="assume">Estimate assumptions: ROW widths ${Object.entries(A.rowWidth).map(([k, v]) => k + ' kV=' + v + ' ft').join(', ')}; a second line beside an existing one adds ${Math.round(A.extra * 100)}% width; joint delivery avoids ${Math.round(A.lowPct * 100)}-${Math.round(A.highPct * 100)}% of the shared cost (a shared site counts ${Math.round(A.siteShare * 100)}% of the Dominion project cost), faded to zero as the schedule gap reaches ${(A.taper / 365).toFixed(0)} years. Lines are drawn straight between their two substations.</div>
+    </div>`;
   el.querySelectorAll('[data-go]').forEach(a => a.addEventListener('click', e => { e.preventDefault(); select(a.dataset.go, false); }));
-  el.querySelector('.x').addEventListener('click', () => { selected = null; el.style.display = 'none'; layerSel.clearLayers(); map.getPane('overlaps').style.opacity = 1; renderList(); });
+  wirePanel(el);
 }
+
+
+// ---- hover readout over the 25-mile circles -------------------------------
+// Standing where two circles intersect reports BOTH, because containment comes
+// from the cursor position rather than from Leaflet's topmost-shape hover. The
+// intersection is the interesting part: a project sitting there is within reach
+// of two separate projects at once.
+const hoverBox = document.getElementById('hoverinfo');
+let hoverIds = '';
+
+function ringsUnder(latlng) {
+  return rings.filter(r => map.distance(latlng, r.p.c) <= RADIUS_MI * MILE_M);
+}
+
+function clearHover() {
+  rings.forEach(r => r.layer.setStyle(r.base));
+  hoverBox.hidden = true;
+  hoverBox.classList.remove('two');
+  hoverIds = '';
+}
+
+// Projects inside every hovered circle at once. The centre of a circle can be
+// either company here, so report the other company's projects when the hovered
+// circles all belong to one side, and everything when they are mixed.
+function sharedProjects(hits) {
+  const centres = new Set(hits.map(r => r.p.id));
+  const allDom = hits.every(r => isDominion(r.p));
+  const allGpc = hits.every(r => !isDominion(r.p));
+  const want = allDom ? (q => !isDominion(q)) : allGpc ? (q => isDominion(q)) : (() => true);
+  const label = allDom ? 'Georgia Power' : allGpc ? 'Dominion' : '';
+  const showPartners = document.getElementById('partners').checked;
+  const list = DATA.projects.filter(q =>
+    q.c && !centres.has(q.id) && want(q)
+    && (showPartners || isDominion(q) || ['GPC', 'SAV'].includes(q.sponsor))
+    && hits.every(r => map.distance(L.latLng(q.c), L.latLng(r.p.c)) <= RADIUS_MI * MILE_M));
+  return {list: list, label: label};
+}
+
+// Two figures, deliberately not added together: published Dominion spend, and
+// the saving from the best-ranked overlap these projects take part in. Georgia
+// Power redacts its costs, so spend is the Dominion side only.
+function costBlock(hits) {
+  const ids = new Set(hits.map(r => r.p.id));
+  const costs = hits.map(r => r.p.cost).filter(c => c);
+  const spend = costs.reduce((s, c) => s + c, 0);
+  const est = visible.filter(o => (ids.has(o.a) || ids.has(o.b)) && o.lo != null && o.lo > 0)
+                     .sort((x, y) => y.rscore - x.rscore)[0];
+  if (!costs.length && !est) return '';
+  return '<div class="hsplit">'
+    + (costs.length
+        ? `<div class="hrow"><span class="hcost">${money(spend)}</span>
+             <span class="hs">planned Dominion spend${costs.length < hits.length
+               ? ' (' + costs.length + ' of ' + hits.length + ' published)' : ''}</span></div>`
+        : '')
+    + (est
+        ? `<div class="hrow"><b>${money(est.lo)} &ndash; ${money(est.hi)}</b>
+             <span class="hs">rough saving if coordinated &middot; ${esc(est.id)}</span></div>`
+        : '<div class="hrow hs">no cost saving estimated for these overlaps</div>')
+    + '</div>';
+}
+
+function trim(t, n) { return t.length > n ? t.slice(0, n - 1).trimEnd() + '\u2026' : t; }
+
+function renderHover(hits) {
+  const key = hits.map(r => r.p.id).join(',');
+  if (key === hoverIds) return;
+  hoverIds = key;
+  rings.forEach(r => r.layer.setStyle(
+    hits.includes(r) ? {weight: r.base.weight + 2, fillOpacity: .13} : r.base));
+
+  const shared = sharedProjects(hits);
+  const many = hits.length > 1;
+  hoverBox.classList.toggle('two', many);
+  hoverBox.innerHTML =
+    `<div class="ht">${many ? hits.length + ' circles overlap here' : 'Inside 1 circle'}</div>
+     <div class="hs">${many ? 'this ground is within 25 mi of ' + hits.length + ' projects'
+                            : 'within 25 mi of this project'}</div>`
+    + hits.slice(0, 3).map(r =>
+        `<div class="hrow"><span class="hid">${esc(r.p.id)}</span> ${esc(trim(r.p.name, 46))}</div>`).join('')
+    + (hits.length > 3 ? `<div class="hrow hs">+ ${hits.length - 3} more</div>` : '')
+    + `<div class="hsplit"><span class="hcount">${shared.list.length}</span>
+         <span class="hs">${shared.label ? shared.label + ' ' : ''}project${shared.list.length === 1 ? '' : 's'} ${many ? 'inside all of them' : 'inside'}</span></div>`
+    + (many && shared.list.length
+        ? `<div class="hrow">${shared.list.slice(0, 4).map(q => esc(q.id)).join(', ')}${shared.list.length > 4 ? ' +' + (shared.list.length - 4) + ' more' : ''}</div>`
+        : '')
+    + costBlock(hits);
+  hoverBox.hidden = false;
+}
+
+let hoverQueued = false;
+map.on('mousemove', e => {
+  if (hoverQueued) return;
+  hoverQueued = true;
+  requestAnimationFrame(() => {
+    hoverQueued = false;
+    const hits = ringsUnder(e.latlng);
+    if (hits.length) renderHover(hits); else clearHover();
+  });
+});
+map.on('mouseout', clearHover);
 
 if (!DATA.partners.length) document.getElementById('partners').closest('label').style.display = 'none';
 ['miles', 'gap', 'conf', 'showall', 'group', 'radii', 'partners'].forEach(id => document.getElementById(id).addEventListener('input', render));
