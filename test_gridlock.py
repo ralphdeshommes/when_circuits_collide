@@ -275,6 +275,18 @@ try {
     .filter(c => c.getBoundingClientRect().bottom <= window.innerHeight).length;
   el('mapkey').open = true;
   out.side_key_expands = !!document.querySelector('#mapkey .legend');
+  // Opened, the panel scrolls internally. The summary has to stay put or there
+  // is no visible way to close it again.
+  const sum = document.querySelector('#mapkey > summary');
+  out.key_summary_sticky = getComputedStyle(sum).position === 'sticky';
+  el('mapkey').scrollTop = el('mapkey').scrollHeight;
+  const sr = sum.getBoundingClientRect(), kr = el('mapkey').getBoundingClientRect();
+  out.key_summary_visible_when_scrolled = sr.top >= kr.top - 1 && sr.bottom <= kr.bottom + 1;
+  out.key_howto_bullets = document.querySelectorAll('#mapkey .howto li').length;
+  out.key_no_wall_of_text = !el('mapkey').textContent
+    .includes('a project with only one location found has no line and is a single');
+  sum.click();
+  out.key_collapses_on_click = !el('mapkey').open;
   el('mapkey').open = false;
 
   const g = el('group');
@@ -509,6 +521,12 @@ def test_map():
           (r.get("side_list_top"), r.get("side_key_top")))
     check("the map key is folded away by default", r.get("side_key_collapsed"))
     check("the map key still expands", r.get("side_key_expands"))
+    check("its header stays put when the panel is scrolled",
+          r.get("key_summary_sticky") and r.get("key_summary_visible_when_scrolled"))
+    check("clicking the header collapses it again", r.get("key_collapses_on_click"))
+    check("the how-to is a list, not one long paragraph",
+          r.get("key_howto_bullets", 0) >= 5 and r.get("key_no_wall_of_text"),
+          r.get("key_howto_bullets"))
     check("at least one ranked card is visible without scrolling",
           r.get("side_cards_in_view", 0) >= 1, r.get("side_cards_in_view"))
 
