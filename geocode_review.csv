@@ -1,0 +1,406 @@
+project_id,endpoint,looked_for,matched_osm_name,how,lat,lon,operator,osm_link,checked_on
+DESC_11,a,Hopkins,,not_found,,,,,2026-09-26 03:44
+DESC_11,b,CIP,,not_found,,,,,2026-09-26 03:44
+DESC_12,a,Faber Place,Faber Place Substation,auto_exact,32.8500798,-80.0146241,,https://www.openstreetmap.org/way/217507829,2026-09-26 03:44
+DESC_12,b,Bayfront,,not_found,,,,,2026-09-26 03:44
+DESC_13,a,Square D,,not_found,,,,,2026-09-26 03:44
+DESC_13,b,Hopkins,,not_found,,,,,2026-09-26 03:44
+DESC_15,a,Stevens Creek,,not_found,,,,,2026-09-26 03:44
+DESC_15,b,Hooks,,not_found,,,,,2026-09-26 03:44
+DESC_16,a,Edenwood,,not_found,,,,,2026-09-26 03:44
+DESC_17,a,Williams St,,not_found,,,,,2026-09-26 03:44
+DESC_18,a,Harleyville,Harleyville Substation,auto_exact,33.2099069,-80.4511658,,https://www.openstreetmap.org/way/1075801506,2026-09-26 03:44
+DESC_19,a,Summerville,,not_found,,,,,2026-09-26 03:44
+DESC_2,a,Union Pier,,not_found,,,,,2026-09-26 03:44
+DESC_20,a,Canadys,Canadys Substation,auto_exact,33.0640963,-80.6205999,South Carolina Electric & Gas Company,https://www.openstreetmap.org/way/185032900,2026-09-26 03:44
+DESC_20,b,Ritter,,not_found,,,,,2026-09-26 03:44
+DESC_21,a,Yemassee,Yemassee Substation,auto_exact,32.6974259,-80.8637929,South Carolina Electric & Gas Company,https://www.openstreetmap.org/way/185317032,2026-09-26 03:44
+DESC_21,b,Ritter,,not_found,,,,,2026-09-26 03:44
+DESC_22,a,Riverport,,not_found,,,,,2026-09-26 03:44
+DESC_24,a,Wagener,Wagener Substation,auto_exact,33.6501119,-81.3605659,South Carolina Gas & Electric,https://www.openstreetmap.org/way/993540535,2026-09-26 03:44
+DESC_25,a,Church Creek,Church Creek Substation,auto_exact,32.8303196,-80.0702792,,https://www.openstreetmap.org/way/185330726,2026-09-26 03:44
+DESC_25,b,Ritter,,not_found,,,,,2026-09-26 03:44
+DESC_26,a,VCS2,,not_found,,,,,2026-09-26 03:44
+DESC_26,b,Ward,Ward Substation,auto_exact,33.87218,-81.6977228,,https://www.openstreetmap.org/way/185197506,2026-09-26 03:44
+DESC_27,a,Goose Creek Reservoir,,not_found,,,,,2026-09-26 03:44
+DESC_28,a,Summerville,,not_found,,,,,2026-09-26 03:44
+DESC_29,a,St George,Saint George Switching Station,auto_exact,33.199388,-80.5920086,,https://www.openstreetmap.org/way/1069480257,2026-09-26 03:44
+DESC_29,b,Sumter,Sumter Substation,auto_exact,33.8976611,-80.3239761,,https://www.openstreetmap.org/way/185032893,2026-09-26 03:44
+DESC_3,a,Okatie,,not_found,,,,,2026-09-26 03:44
+DESC_30,a,Coit,,not_found,,,,,2026-09-26 03:44
+DESC_30,b,Gills Creek,,not_found,,,,,2026-09-26 03:44
+DESC_32,a,Batesburg,Batesburg Substation,auto_exact,33.9134867,-81.5644353,,https://www.openstreetmap.org/way/178951280,2026-09-26 03:44
+DESC_32,b,Saluda County,,not_found,,,,,2026-09-26 03:44
+DESC_33,a,Scout,,not_found,,,,,2026-09-26 03:44
+DESC_34,a,Dawson,,not_found,,,,,2026-09-26 03:44
+DESC_35,a,Urquhart,Urquhart Substation,auto_exact,33.4328703,-81.9110807,,https://www.openstreetmap.org/relation/14317637,2026-09-26 03:44
+DESC_35,b,Toolebeck,Toolebeck Substation,auto_exact,33.5346321,-81.6693272,,https://www.openstreetmap.org/way/1073259467,2026-09-26 03:44
+DESC_36,a,Williams,Williams Substation,auto_exact,33.0176985,-79.9321678,,https://www.openstreetmap.org/way/184867924,2026-09-26 03:44
+DESC_36,b,Summerville,,not_found,,,,,2026-09-26 03:44
+DESC_37,a,Cainhoy,Cainhoy Substation,auto_exact,32.941402,-79.8422757,Dominion Energy South Carolina,https://www.openstreetmap.org/way/229116275,2026-09-26 03:44
+DESC_38,a,Jack Primus,Jack Primus Substation,auto_exact,32.9193841,-79.9044954,South Carolina Gas & Electric,https://www.openstreetmap.org/way/1097237376,2026-09-26 03:44
+DESC_39,a,Church Creek,Church Creek Substation,auto_exact,32.8303196,-80.0702792,,https://www.openstreetmap.org/way/185330726,2026-09-26 03:44
+DESC_39,b,Faber Place,Faber Place Substation,auto_exact,32.8500798,-80.0146241,,https://www.openstreetmap.org/way/217507829,2026-09-26 03:44
+DESC_4,a,Cainhoy,Cainhoy Substation,auto_exact,32.941402,-79.8422757,Dominion Energy South Carolina,https://www.openstreetmap.org/way/229116275,2026-09-26 03:44
+DESC_4,b,Hamlin,Hamlin Substation,auto_exact,32.859937,-79.7884409,South Carolina Gas & Electric,https://www.openstreetmap.org/way/229116306,2026-09-26 03:44
+DESC_40,a,Eastover,,not_found,,,,,2026-09-26 03:44
+DESC_40,b,Sumter,Sumter Substation,auto_exact,33.8976611,-80.3239761,,https://www.openstreetmap.org/way/185032893,2026-09-26 03:44
+DESC_41,a,Cameron Jct,Cameron Substation,auto_exact,33.5636663,-80.7089959,,https://www.openstreetmap.org/way/318318141,2026-09-26 03:44
+DESC_41,b,Elloree,Elloree Substation,auto_exact,33.5323844,-80.5797245,,https://www.openstreetmap.org/way/1075509549,2026-09-26 03:44
+DESC_42,a,Elloree,Elloree Substation,auto_exact,33.5323844,-80.5797245,,https://www.openstreetmap.org/way/1075509549,2026-09-26 03:44
+DESC_42,b,Santee City,,not_found,,,,,2026-09-26 03:44
+DESC_43,a,Urquhart,Urquhart Substation,auto_exact,33.4328703,-81.9110807,,https://www.openstreetmap.org/relation/14317637,2026-09-26 03:44
+DESC_43,b,Aiken PSA,,not_found,,,,,2026-09-26 03:44
+DESC_44,a,Cameron Jct,Cameron Substation,auto_exact,33.5636663,-80.7089959,,https://www.openstreetmap.org/way/318318141,2026-09-26 03:44
+DESC_44,b,Cameron,Cameron Substation,auto_exact,33.5636663,-80.7089959,,https://www.openstreetmap.org/way/318318141,2026-09-26 03:44
+DESC_5,a,Eastover,,not_found,,,,,2026-09-26 03:44
+DESC_5,b,Square D,,not_found,,,,,2026-09-26 03:44
+DESC_6,a,Burton,Burton Substation,auto_exact,32.4364883,-80.7210159,South Carolina Electric & Gas Company,https://www.openstreetmap.org/way/185362029,2026-09-26 03:44
+DESC_6,b,St Helena,,not_found,,,,,2026-09-26 03:44
+DESC_7,a,Burton,Burton Substation,auto_exact,32.4364883,-80.7210159,South Carolina Electric & Gas Company,https://www.openstreetmap.org/way/185362029,2026-09-26 03:44
+DESC_7,b,St Helena,,not_found,,,,,2026-09-26 03:44
+DESC_8,a,VCS1,,not_found,,,,,2026-09-26 03:44
+DESC_8,b,Denny Terrace,Denny Terrace Substation,auto_exact,34.0576091,-81.061561,South Carolina Electric & Gas Company,https://www.openstreetmap.org/way/185130609,2026-09-26 03:44
+DESC_9,a,Wateree,Wateree Dam Substation,auto_ambiguous,34.3346578,-80.7023194,,https://www.openstreetmap.org/way/206005320,2026-09-26 03:44
+DESC_9,b,Killian,,not_found,,,,,2026-09-26 03:44
+GPC_08458,a,BARNESVILLE,Barnesville Primary Substation,auto_exact,33.0320694,-84.2012582,Georgia Power,https://www.openstreetmap.org/way/564834100,2026-09-26 03:44
+GPC_08458,b,SOUTH GRIFFIN,,not_found,,,,,2026-09-26 03:44
+GPC_09661,a,MCGRAU FORD,McGrau Ford Substation,auto_exact,34.3264526,-84.3370065,,https://www.openstreetmap.org/way/159758301,2026-09-26 03:44
+GPC_09661,b,MIDDLE FORK,,not_found,,,,,2026-09-26 03:44
+GPC_09662,a,EAST WALTON,,not_found,,,,,2026-09-26 03:44
+GPC_10143,a,LAWRENCEVILLE,Lawrenceville Primary Substation,auto_exact,33.985981,-84.0007988,Georgia Power,https://www.openstreetmap.org/way/516459394,2026-09-26 03:44
+GPC_10143,b,WINDER,Winder Primary Substation,auto_ambiguous,33.9954594,-83.7531307,Georgia Power,https://www.openstreetmap.org/way/171583070,2026-09-26 03:44
+GPC_10222,a,BLAKELY PRIMARY,Blakely Primary Substation,auto_exact,31.371554,-84.9059802,Georgia Power,https://www.openstreetmap.org/way/270628470,2026-09-26 03:44
+GPC_10222,b,HUCKLEBERRY,,not_found,,,,,2026-09-26 03:44
+GPC_10478,a,CORNELIA,,not_found,,,,,2026-09-26 03:44
+GPC_10478,b,TALLULAH LODGE,,not_found,,,,,2026-09-26 03:44
+GPC_10481,a,LAWRENCEVILLE,Lawrenceville Primary Substation,auto_exact,33.985981,-84.0007988,Georgia Power,https://www.openstreetmap.org/way/516459394,2026-09-26 03:44
+GPC_10481,b,WINDER PRIMARY,Winder Primary Substation,auto_ambiguous,33.9954594,-83.7531307,Georgia Power,https://www.openstreetmap.org/way/171583070,2026-09-26 03:44
+GPC_10487,a,PINE GROVE PRIMARY,Pine Grove Primary Substation,auto_exact,30.8816485,-83.2279869,Georgia Power,https://www.openstreetmap.org/way/174399121,2026-09-26 03:44
+GPC_10487,b,WEST VALDOSTA,East Valdosta Substation,auto_fuzzy,30.846057,-83.2543359,Georgia Power,https://www.openstreetmap.org/way/740574499,2026-09-26 03:44
+GPC_10811,a,BOWEN #10,,not_found,,,,,2026-09-26 03:44
+GPC_10814,a,BAY CREEK,Bay Creek Substation,auto_exact,33.8681196,-83.8823506,Georgia Power,https://www.openstreetmap.org/way/175826909,2026-09-26 03:44
+GPC_11051,a,SLAPPEY DRIVE,,not_found,,,,,2026-09-26 03:44
+GPC_11051,b,WESTOVER,,not_found,,,,,2026-09-26 03:44
+GPC_12120,a,GAINESVILLE #2,Gainesville Substation #2,auto_exact,34.263022,-83.8096728,Georgia Power,https://www.openstreetmap.org/way/179716524,2026-09-26 03:44
+GPC_12120,b,MCEVER ROAD,McEver Road Substation,auto_exact,34.2728832,-83.8738012,Georgia Power,https://www.openstreetmap.org/way/1037359821,2026-09-26 03:44
+GPC_12147,a,EAST SOCIAL CIRCLE,East Social Circle Substation,auto_exact,33.6741503,-83.6793256,,https://www.openstreetmap.org/way/171531630,2026-09-26 03:44
+GPC_12147,b,SNELLVILLE,Snellville Substation,auto_exact,33.8388687,-84.0481209,Georgia Power,https://www.openstreetmap.org/way/176906115,2026-09-26 03:44
+GPC_12217,a,CENTER PRIMARY,Center Primary Substation,auto_exact,34.0534411,-83.3980855,Georgia Power,https://www.openstreetmap.org/way/171540518,2026-09-26 03:44
+GPC_12217,b,CLARKSBORO,,not_found,,,,,2026-09-26 03:44
+GPC_13166,a,FIRST AVENUE,,not_found,,,,,2026-09-26 03:44
+GPC_13166,b,NORTH COLUMBUS,,not_found,,,,,2026-09-26 03:44
+GPC_13628,a,SOUTH BAINBRIDGE,South Bainbridge Substation,auto_exact,30.8396079,-84.4889211,Georgia Power,https://www.openstreetmap.org/way/165831924,2026-09-26 03:44
+GPC_13628,b,SINAI (FPL),,not_found,,,,,2026-09-26 03:44
+GPC_13753,a,ALCOVY ROAD,,not_found,,,,,2026-09-26 03:44
+GPC_13753,b,SKC,,not_found,,,,,2026-09-26 03:44
+GPC_13787,a,AULTMAN ROAD,Altman Road Substation,auto_fuzzy,32.56338,-83.7399508,Flint Energies,https://www.openstreetmap.org/way/652954546,2026-09-26 03:44
+GPC_13787,b,BONAIRE PRIMARY,Bonaire Primary Substation,auto_exact,32.5647949,-83.6000226,Georgia Power,https://www.openstreetmap.org/way/160308063,2026-09-26 03:44
+GPC_14222,a,THOMSON PRIMARY,Thomson Primary Substation,auto_ambiguous,33.453955,-82.414219,Georgia Power,https://www.openstreetmap.org/way/160065782,2026-09-26 03:44
+GPC_15879,a,POSSUM BRANCH,,not_found,,,,,2026-09-26 03:44
+GPC_15879,b,YATES COMMON,Yates Common Substation,auto_exact,33.4616412,-84.9041978,Georgia Power,https://www.openstreetmap.org/way/652943491,2026-09-26 03:44
+GPC_16007,a,FENWICK STREET,,not_found,,,,,2026-09-26 03:44
+GPC_16007,b,SAND BAR FERRY,,not_found,,,,,2026-09-26 03:44
+GPC_16887,a,BUTLER,Butler Primary Substation,auto_exact,32.5710217,-84.2897288,,https://www.openstreetmap.org/way/170999705,2026-09-26 03:44
+GPC_16887,b,THOMASTON,Thomaston Primary Substation,auto_exact,32.8999225,-84.3125168,Georgia Power,https://www.openstreetmap.org/way/160308061,2026-09-26 03:44
+GPC_17075,a,LITTLE OGEECHEE,Little Ogeechee Substation,auto_exact,32.0067859,-81.2531513,Georgia Power,https://www.openstreetmap.org/way/121701191,2026-09-26 03:44
+GPC_17706,a,AULTMAN ROAD,Altman Road Substation,auto_fuzzy,32.56338,-83.7399508,Flint Energies,https://www.openstreetmap.org/way/652954546,2026-09-26 03:44
+GPC_17706,b,FORT VALLEY #1,Fort Valley Substation,auto_fuzzy,32.561358,-83.8722581,,https://www.openstreetmap.org/way/493048692,2026-09-26 03:44
+GPC_17900,a,UNION CITY,,not_found,,,,,2026-09-26 03:44
+GPC_17900,b,YATES,Plant Yates,auto_exact,33.4576339,-84.8969584,Georgia Power,https://www.openstreetmap.org/way/1024438670,2026-09-26 03:44
+GPC_17977,a,ATHENA,Athena Substation,auto_exact,33.9764031,-83.3461189,Georgia Power,https://www.openstreetmap.org/way/171540528,2026-09-26 03:44
+GPC_17977,b,EAST WATKINSVILLE,East Watkinsville Substation,auto_exact,33.8605463,-83.3847649,Georgia Power,https://www.openstreetmap.org/way/171540512,2026-09-26 03:44
+GPC_17993,a,EVANS PRIMARY,Evans Primary Substation,auto_exact,33.5439942,-82.1686481,Georgia Power,https://www.openstreetmap.org/way/52103255,2026-09-26 03:44
+GPC_17993,b,THOMSON PRIMARY,Thomson Primary Substation,auto_ambiguous,33.453955,-82.414219,Georgia Power,https://www.openstreetmap.org/way/160065782,2026-09-26 03:44
+GPC_18153,a,BONAIRE PRI,,not_found,,,,,2026-09-26 03:44
+GPC_18153,b,ECHECONNEE,,not_found,,,,,2026-09-26 03:44
+GPC_18573,a,ARKWRIGHT,Arkwight Substation,auto_fuzzy,32.9272219,-83.698878,Georgia Power,https://www.openstreetmap.org/way/164024559,2026-09-26 03:44
+GPC_18573,b,LLOYD SHOALS,Lloyd Shoals Dam,auto_exact,33.3206142,-83.8410088,Georgia Power,https://www.openstreetmap.org/way/674159021,2026-09-26 03:44
+GPC_18668,a,JESUP,Jesup Substation,auto_exact,31.6031063,-81.9249474,Georgia Power,https://www.openstreetmap.org/way/103029795,2026-09-26 03:44
+GPC_18668,b,OFFERMAN,Offerman Substation,auto_exact,31.4230725,-82.1436621,Georgia Power,https://www.openstreetmap.org/way/52069715,2026-09-26 03:44
+GPC_18669,a,DAWSON CROSSING,Dawson Crossing Substation,auto_exact,34.3781185,-84.1335754,Georgia Power,https://www.openstreetmap.org/way/177912657,2026-09-26 03:44
+GPC_18669,b,NELSON (WHITE),Nelson Substation,auto_exact,34.3865972,-84.3787707,Georgia Power,https://www.openstreetmap.org/way/171713857,2026-09-26 03:44
+GPC_18670,a,BANKS CROSSING,,not_found,,,,,2026-09-26 03:44
+GPC_18670,b,POND FORK,,not_found,,,,,2026-09-26 03:44
+GPC_18679,a,EAST DALTON,,not_found,,,,,2026-09-26 03:44
+GPC_18679,b,OOSTANAULA,,not_found,,,,,2026-09-26 03:44
+GPC_18690,a,PALMYRA REACTOR REMOVAL,,not_found,,,,,2026-09-26 03:44
+GPC_18691,a,LIZARD LOPE,,not_found,,,,,2026-09-26 03:44
+GPC_18691,b,WESTOVER,,not_found,,,,,2026-09-26 03:44
+GPC_18700,a,DAWSON CROSSING,Dawson Crossing Substation,auto_exact,34.3781185,-84.1335754,Georgia Power,https://www.openstreetmap.org/way/177912657,2026-09-26 03:44
+GPC_18700,b,GAINESVILLE #1,Gainesville Substation #2,auto_fuzzy,34.263022,-83.8096728,Georgia Power,https://www.openstreetmap.org/way/179716524,2026-09-26 03:44
+GPC_18736,a,MICROSOFT,,not_found,,,,,2026-09-26 03:44
+GPC_18736,b,SHUGART (CCO06),,not_found,,,,,2026-09-26 03:44
+GPC_18774,a,HEARD COUNTY,Heard County Substation,auto_exact,33.358678,-84.9942221,,https://www.openstreetmap.org/way/163891193,2026-09-26 03:44
+GPC_18774,b,TENASKA,,not_found,,,,,2026-09-26 03:44
+GPC_18800,a,ECHECONNEE,,not_found,,,,,2026-09-26 03:44
+GPC_18800,b,WELLSTON,,not_found,,,,,2026-09-26 03:44
+GPC_18832,a,FORTSON,Fortson Substation,auto_exact,32.6101653,-84.9156341,,https://www.openstreetmap.org/way/163762708,2026-09-26 03:44
+GPC_18848,a,"BAINBRIDGE TRANSMISSION: EAST RIVER ROAD, EAST BAINBRIDGE",,not_found,,,,,2026-09-26 03:44
+GPC_18889,a,JEFFERSON STREET#3,,not_found,,,,,2026-09-26 03:44
+GPC_18889,b,NORTHWEST (WHITE),,not_found,,,,,2026-09-26 03:44
+GPC_18960,a,BLANKETS CREEK,Blankets Creek Substation,auto_exact,34.1857567,-84.5080123,Georgia Power,https://www.openstreetmap.org/way/178249108,2026-09-26 03:44
+GPC_18960,b,WOODSTOCK,Woodstock Substation,auto_exact,34.0852701,-84.5134557,Georgia Power,https://www.openstreetmap.org/way/177931262,2026-09-26 03:44
+GPC_19187,a,BREMEN,Bremen Primary Substation,auto_exact,33.7091924,-85.1427159,Georgia Power,https://www.openstreetmap.org/way/9307582,2026-09-26 03:44
+GPC_19187,b,CROOKED CREEK,,not_found,,,,,2026-09-26 03:44
+GPC_19248,a,SANDERSVILLE #1,Sandersville Substation #1,auto_exact,32.9984771,-82.801938,Georgia Power,https://www.openstreetmap.org/way/170295993,2026-09-26 03:44
+GPC_19248,b,WADLEY PRI.,,not_found,,,,,2026-09-26 03:44
+GPC_19287,a,GRADY,Gray Substation,auto_fuzzy,32.9953281,-83.5635642,Georgia Power,https://www.openstreetmap.org/way/344331787,2026-09-26 03:44
+GPC_19287,b,WEST END,,not_found,,,,,2026-09-26 03:44
+GPC_19334,a,LAGRANGE,LaGrange Primary Substation,auto_exact,33.0241058,-85.0156804,Georgia Power,https://www.openstreetmap.org/way/171039366,2026-09-26 03:44
+GPC_19334,b,NORTH OPELIKA,,not_found,,,,,2026-09-26 03:44
+GPC_19358,a,EAST MOULTRIE,East Moultrie Substation,auto_exact,31.2421775,-83.7434741,Georgia Power,https://www.openstreetmap.org/way/174466530,2026-09-26 03:44
+GPC_19358,b,HIGHWAY,,not_found,,,,,2026-09-26 03:44
+GPC_19363,a,MORROW,Morrow Substation,auto_exact,33.605931,-84.3334617,Georgia Power,https://www.openstreetmap.org/way/171479107,2026-09-26 03:44
+GPC_19363,b,MOUNTAIN VIEW,,not_found,,,,,2026-09-26 03:44
+GPC_19523,a,HYUNDAI MOTORS SAVANNAH AKA. PROJECT EA,,not_found,,,,,2026-09-26 03:44
+GPC_19597,a,ADAMSVILLE,,not_found,,,,,2026-09-26 03:44
+GPC_19597,b,BUZZARD ROOST,,not_found,,,,,2026-09-26 03:44
+GPC_19598,a,DRESDEN,Dresden Substation,auto_exact,33.3511155,-84.9059539,,https://www.openstreetmap.org/way/163891152,2026-09-26 03:44
+GPC_19598,b,LAGRANGE PRIMARY,LaGrange Primary Substation,auto_exact,33.0241058,-85.0156804,Georgia Power,https://www.openstreetmap.org/way/171039366,2026-09-26 03:44
+GPC_19601,a,MORROW,Morrow Substation,auto_exact,33.605931,-84.3334617,Georgia Power,https://www.openstreetmap.org/way/171479107,2026-09-26 03:44
+GPC_19601,b,YATES COMMON,Yates Common Substation,auto_exact,33.4616412,-84.9041978,Georgia Power,https://www.openstreetmap.org/way/652943491,2026-09-26 03:44
+GPC_19606,a,SKC,,not_found,,,,,2026-09-26 03:44
+GPC_19618,a,GORDON,Gordon Substation,auto_exact,32.8824706,-83.3169141,Georgia Power,https://www.openstreetmap.org/way/170991651,2026-09-26 03:44
+GPC_19618,b,N DUBLIN,,not_found,,,,,2026-09-26 03:44
+GPC_19621,a,MCEVER ROAD,McEver Road Substation,auto_exact,34.2728832,-83.8738012,Georgia Power,https://www.openstreetmap.org/way/1037359821,2026-09-26 03:44
+GPC_19621,b,SHOAL CREEK,,not_found,,,,,2026-09-26 03:44
+GPC_19622,a,RIDDLEVILLE BUS,,not_found,,,,,2026-09-26 03:44
+GPC_19626,a,GLENWOOD SPRINGS,,not_found,,,,,2026-09-26 03:44
+GPC_19627,a,ECHECONNEE,,not_found,,,,,2026-09-26 03:44
+GPC_19627,b,WELLSTON,,not_found,,,,,2026-09-26 03:44
+GPC_19629,a,BRUMBLEY CREEK,,not_found,,,,,2026-09-26 03:44
+GPC_19629,b,SOUTH BAINBRIDGE,South Bainbridge Substation,auto_exact,30.8396079,-84.4889211,Georgia Power,https://www.openstreetmap.org/way/165831924,2026-09-26 03:44
+GPC_19630,a,THOMASVILLE,Thomasville Substation,auto_exact,30.9085196,-84.0050314,Georgia Transmission Corporation,https://www.openstreetmap.org/way/172096005,2026-09-26 03:44
+GPC_19631,a,PINE GROVE PRIMARY,Pine Grove Primary Substation,auto_exact,30.8816485,-83.2279869,Georgia Power,https://www.openstreetmap.org/way/174399121,2026-09-26 03:44
+GPC_19632,a,AVERY,Avery Substation,auto_exact,34.2169889,-84.3857643,Georgia Power,https://www.openstreetmap.org/way/700215120,2026-09-26 03:44
+GPC_19632,b,HOPEWELL,Hopewell Substation,auto_exact,34.1741923,-84.2834055,Georgia Power,https://www.openstreetmap.org/way/177931281,2026-09-26 03:44
+GPC_19635,a,HICKORY LEVEL,,not_found,,,,,2026-09-26 03:44
+GPC_19635,b,VILLA RICA,Villa Rica Substation,auto_exact,33.7410224,-84.8548652,,https://www.openstreetmap.org/way/159758304,2026-09-26 03:44
+GPC_19636,a,HAMMOND,Hammod Substation,auto_fuzzy,34.2512064,-85.34558,Georgia Power,https://www.openstreetmap.org/way/186429831,2026-09-26 03:44
+GPC_19636,b,WEISS DAM,,not_found,,,,,2026-09-26 03:44
+GPC_19676,a,ADAMSVILLE,,not_found,,,,,2026-09-26 03:44
+GPC_19676,b,JACK MCDONOUGH,,not_found,,,,,2026-09-26 03:44
+GPC_19706,a,GAINESVILLE #2 EQUIPMENT,,not_found,,,,,2026-09-26 03:44
+GPC_19950,a,DRESDEN,Dresden Substation,auto_exact,33.3511155,-84.9059539,,https://www.openstreetmap.org/way/163891152,2026-09-26 03:44
+GPC_19950,b,TALBOT,,not_found,,,,,2026-09-26 03:44
+GPC_19966,a,BIG OGEECHEE,,not_found,,,,,2026-09-26 03:44
+GPC_19992,a,BOSTWICK,,not_found,,,,,2026-09-26 03:44
+GPC_19992,b,EAST SOCIAL CIRCLE,East Social Circle Substation,auto_exact,33.6741503,-83.6793256,,https://www.openstreetmap.org/way/171531630,2026-09-26 03:44
+GPC_19995,a,TALLULAH LODGE,,not_found,,,,,2026-09-26 03:44
+GPC_19995,b,TOCCOA,Toccoa Primary Substation,auto_exact,34.5809462,-83.3527341,Georgia Power,https://www.openstreetmap.org/way/52440914,2026-09-26 03:44
+GPC_19996,a,GOLDENS CREEK,,not_found,,,,,2026-09-26 03:44
+GPC_19996,b,WARRENTON PRIMARY,Warrenton Primary Substation,auto_ambiguous,33.3805007,-82.687296,Georgia Power,https://www.openstreetmap.org/way/170296005,2026-09-26 03:44
+GPC_19997,a,AULTMAN ROAD,Altman Road Substation,auto_fuzzy,32.56338,-83.7399508,Flint Energies,https://www.openstreetmap.org/way/652954546,2026-09-26 03:44
+GPC_19997,b,PERRY,Perry Primary Substation,auto_exact,32.4553814,-83.7020208,,https://www.openstreetmap.org/way/177850740,2026-09-26 03:44
+GPC_19999,a,ROBINS SPRING BUS,,not_found,,,,,2026-09-26 03:44
+GPC_20001,a,ROBINS SPRING,Robins Spring Substation,auto_exact,33.0054267,-82.8797626,Georgia Power,https://www.openstreetmap.org/way/1011162726,2026-09-26 03:44
+GPC_20002,a,GORDON,Gordon Substation,auto_exact,32.8824706,-83.3169141,Georgia Power,https://www.openstreetmap.org/way/170991651,2026-09-26 03:44
+GPC_20002,b,SANDERSVILLE #1,Sandersville Substation #1,auto_exact,32.9984771,-82.801938,Georgia Power,https://www.openstreetmap.org/way/170295993,2026-09-26 03:44
+GPC_20010,a,ANTHONY SHOALS,Anthony Shoals Substation,auto_exact,34.0018324,-82.6362788,Georgia Power,https://www.openstreetmap.org/way/171540506,2026-09-26 03:44
+GPC_20010,b,WASHINGTON,Washington Primary Substation,auto_ambiguous,33.731504,-82.7512848,Georgia Power,https://www.openstreetmap.org/way/490789716,2026-09-26 03:44
+GPC_20015,a,MORNING HORNET 2ND,,not_found,,,,,2026-09-26 03:44
+GPC_20018,a,QTS FAYETTEVILLE,,not_found,,,,,2026-09-26 03:44
+GPC_20020,a,SOUTH HAZLEHURST,South Hazlehurst Substation,auto_exact,31.8106914,-82.5666923,Georgia Power,https://www.openstreetmap.org/relation/14670084,2026-09-26 03:44
+GPC_20020,b,NEW LACY,,not_found,,,,,2026-09-26 03:44
+GPC_20024,a,DYER ROAD,,not_found,,,,,2026-09-26 03:44
+GPC_20024,b,EAST ROANOKE,,not_found,,,,,2026-09-26 03:44
+GPC_20066,a,BOULEVARD,Boulevard Substation,auto_exact,32.0412308,-81.1444637,Georgia Power,https://www.openstreetmap.org/way/381797798,2026-09-26 03:44
+GPC_20066,b,DEPTFORD,Deptford Substation,auto_exact,32.0668279,-81.0483845,Georgia Power,https://www.openstreetmap.org/way/122007500,2026-09-26 03:44
+GPC_20067,a,DEPTFORD,Deptford Substation,auto_exact,32.0668279,-81.0483845,Georgia Power,https://www.openstreetmap.org/way/122007500,2026-09-26 03:44
+GPC_20067,b,MAGNOLIA,Magnolia Substation,auto_exact,32.0226869,-81.0861807,Georgia Power,https://www.openstreetmap.org/way/121857248,2026-09-26 03:44
+GPC_20150,a,HILL VIEW & GRASSY HOLLOW,,not_found,,,,,2026-09-26 03:44
+GPC_20150,b,CC IMPROVEMENTS,,not_found,,,,,2026-09-26 03:44
+GPC_20151,a,CASS PINE 230/25 NEW,,not_found,,,,,2026-09-26 03:44
+GPC_20151,b,QCELLS,,not_found,,,,,2026-09-26 03:44
+GPC_20152,a,CASS PINE,,not_found,,,,,2026-09-26 03:44
+GPC_20152,b,HILL VIEW,,not_found,,,,,2026-09-26 03:44
+GPC_20160,a,THOMASTON 230 NEW BUILD,,not_found,,,,,2026-09-26 03:44
+GPC_20175,a,PROJECT CHRONOS,,not_found,,,,,2026-09-26 03:44
+GPC_20175,b,SK/HYUNDAI,,not_found,,,,,2026-09-26 03:44
+GPC_20216,a,STONEWALL TELL ROAD (TA REALTY),,not_found,,,,,2026-09-26 03:44
+GPC_20223,a,PROJECT PAYTON BAINBRIDGE,,not_found,,,,,2026-09-26 03:44
+GPC_20234,a,DOYLE,Doyle Substation,auto_exact,33.8379245,-83.698786,Georgia Power,https://www.openstreetmap.org/way/176906118,2026-09-26 03:44
+GPC_20234,b,LG&E MONROE,,not_found,,,,,2026-09-26 03:44
+GPC_20243,a,GARRETT ROAD SWITCHING STATION,,not_found,,,,,2026-09-26 03:44
+GPC_20243,b,TRAE LANE,,not_found,,,,,2026-09-26 03:44
+GPC_20248,a,BAY CREEK,Bay Creek Substation,auto_exact,33.8681196,-83.8823506,Georgia Power,https://www.openstreetmap.org/way/175826909,2026-09-26 03:44
+GPC_20248,b,CONYERS,,not_found,,,,,2026-09-26 03:44
+GPC_20264,a,RAY PLACE RD,Ray Place Road Switching Station,auto_fuzzy,33.4682585,-82.8197717,,https://www.openstreetmap.org/way/1085484843,2026-09-26 03:44
+GPC_20264,b,WARRENTON PRIMARY,Warrenton Primary Substation,auto_ambiguous,33.3805007,-82.687296,Georgia Power,https://www.openstreetmap.org/way/170296005,2026-09-26 03:44
+GPC_20270,a,RAY PLACE RD,Ray Place Road Switching Station,auto_fuzzy,33.4682585,-82.8197717,,https://www.openstreetmap.org/way/1085484843,2026-09-26 03:44
+GPC_20270,b,WASHINGTON #3,Washington Substation #2,auto_fuzzy,33.7065043,-82.7531958,Georgia Power,https://www.openstreetmap.org/way/490789707,2026-09-26 03:44
+GPC_20271,a,RAY PLACE RD,Ray Place Road Switching Station,auto_fuzzy,33.4682585,-82.8197717,,https://www.openstreetmap.org/way/1085484843,2026-09-26 03:44
+GPC_20271,b,WASHINGTON (WASHINGTON,,not_found,,,,,2026-09-26 03:44
+GPC_20273,a,DRESDEN,Dresden Substation,auto_exact,33.3511155,-84.9059539,,https://www.openstreetmap.org/way/163891152,2026-09-26 03:44
+GPC_20274,a,UNION CITY,,not_found,,,,,2026-09-26 03:44
+GPC_20274,b,YATES,Plant Yates,auto_exact,33.4576339,-84.8969584,Georgia Power,https://www.openstreetmap.org/way/1024438670,2026-09-26 03:44
+GPC_20284,a,KETTLE CREEK PRIMARY,,not_found,,,,,2026-09-26 03:44
+GPC_20284,b,PINE GROVE PRIMARY,Pine Grove Primary Substation,auto_exact,30.8816485,-83.2279869,Georgia Power,https://www.openstreetmap.org/way/174399121,2026-09-26 03:44
+GPC_20285,a,LOWER RIVER,,not_found,,,,,2026-09-26 03:44
+GPC_20285,b,WEBB,,not_found,,,,,2026-09-26 03:44
+GPC_20298,a,GLENWOOD SPRINGS,,not_found,,,,,2026-09-26 03:44
+GPC_20298,b,LAKE OCONEE,Lake Oconee Substation,auto_exact,33.4595297,-83.247451,,https://www.openstreetmap.org/way/1054868572,2026-09-26 03:44
+GPC_20300,a,MORROW,Morrow Substation,auto_exact,33.605931,-84.3334617,Georgia Power,https://www.openstreetmap.org/way/171479107,2026-09-26 03:44
+GPC_20326,a,ANTHONY SHOALS,Anthony Shoals Substation,auto_exact,34.0018324,-82.6362788,Georgia Power,https://www.openstreetmap.org/way/171540506,2026-09-26 03:44
+GPC_20342,a,CAMDEN INDUSTRIAL PARK,,not_found,,,,,2026-09-26 03:44
+GPC_20346,a,MCMANUS,Plant McManus,auto_exact,31.2158693,-81.5441372,Georgia Power,https://www.openstreetmap.org/way/31496730,2026-09-26 03:44
+GPC_20346,b,WEST BRUNSWICK,West Brunswick Substation,auto_exact,31.2799089,-81.5586568,Georgia Power,https://www.openstreetmap.org/way/174697782,2026-09-26 03:44
+GPC_20375,a,EAST WATKINSVILLE,East Watkinsville Substation,auto_exact,33.8605463,-83.3847649,Georgia Power,https://www.openstreetmap.org/way/171540512,2026-09-26 03:44
+GPC_20407,a,MAGNOLIA,Magnolia Substation,auto_exact,32.0226869,-81.0861807,Georgia Power,https://www.openstreetmap.org/way/121857248,2026-09-26 03:44
+GPC_20407,b,TRUMAN PARKWAY,,not_found,,,,,2026-09-26 03:44
+GPC_20428,a,GORDON,Gordon Substation,auto_exact,32.8824706,-83.3169141,Georgia Power,https://www.openstreetmap.org/way/170991651,2026-09-26 03:44
+GPC_20428,b,SANDERSVILLE #1,Sandersville Substation #1,auto_exact,32.9984771,-82.801938,Georgia Power,https://www.openstreetmap.org/way/170295993,2026-09-26 03:44
+GPC_20431,a,VILLA RICA,Villa Rica Substation,auto_exact,33.7410224,-84.8548652,,https://www.openstreetmap.org/way/159758304,2026-09-26 03:44
+GPC_20464,a,NORCROSS,Norcross Substation,auto_exact,33.9325571,-84.2134303,Georgia Power,https://www.openstreetmap.org/way/159758307,2026-09-26 03:44
+GPC_20466,a,SMART VALVE,,not_found,,,,,2026-09-26 03:44
+GPC_20474,a,GRADY,Gray Substation,auto_fuzzy,32.9953281,-83.5635642,Georgia Power,https://www.openstreetmap.org/way/344331787,2026-09-26 03:44
+GPC_20480,a,EAST POINT,East Point Primary Substation,auto_exact,33.6763499,-84.4629659,Georgia Power,https://www.openstreetmap.org/relation/14128477,2026-09-26 03:44
+GPC_20480,b,UNION CITY,,not_found,,,,,2026-09-26 03:44
+GPC_20482,a,PITTMAN ROAD,,not_found,,,,,2026-09-26 03:44
+GPC_20482,b,WEST POINT DAM,West Point Dam Substation,auto_ambiguous,32.9186235,-85.1903899,,https://www.openstreetmap.org/way/1051943826,2026-09-26 03:44
+GPC_20489,a,SCOTTDALE,,not_found,,,,,2026-09-26 03:44
+GPC_20490,a,KLONDIKE,Klondike Substation,auto_exact,33.6369768,-84.124487,Georgia Power,https://www.openstreetmap.org/way/159784541,2026-09-26 03:44
+GPC_20491,a,EAST POINT,East Point Primary Substation,auto_exact,33.6763499,-84.4629659,Georgia Power,https://www.openstreetmap.org/relation/14128477,2026-09-26 03:44
+GPC_20503,a,BARNEYVILLE,Barnesville Primary Substation,auto_fuzzy,33.0320694,-84.2012582,Georgia Power,https://www.openstreetmap.org/way/564834100,2026-09-26 03:44
+GPC_20503,b,EAST MOULTRIE,East Moultrie Substation,auto_exact,31.2421775,-83.7434741,Georgia Power,https://www.openstreetmap.org/way/174466530,2026-09-26 03:44
+GPC_20505,a,GARRETT RD,,not_found,,,,,2026-09-26 03:44
+GPC_20505,b,V. RICA,,not_found,,,,,2026-09-26 03:44
+GPC_20506,a,SWITCH WAY,,not_found,,,,,2026-09-26 03:44
+GPC_20506,b,THORNTON ROAD,,not_found,,,,,2026-09-26 03:44
+GPC_20509,a,EMBLEM RIVERSIDE CUSTOMER,,not_found,,,,,2026-09-26 03:44
+GPC_20512,a,KATHLEEN,,not_found,,,,,2026-09-26 03:44
+GPC_20516,a,GOAT ROCK,,not_found,,,,,2026-09-26 03:44
+GPC_20586,a,NORTH DUBLIN,,not_found,,,,,2026-09-26 03:44
+GPC_20590,a,EATONTON PRIMARY,Eatonton Substation,auto_exact,33.3044809,-83.4025186,Georgia Power,https://www.openstreetmap.org/way/171527955,2026-09-26 03:44
+GPC_20590,b,LICK CREEK,,not_found,,,,,2026-09-26 03:44
+GPC_20591,a,EATONTON PRIMARY (035591),Eatonton Substation,auto_exact,33.3044809,-83.4025186,Georgia Power,https://www.openstreetmap.org/way/171527955,2026-09-26 03:44
+GPC_20591,b,LICK CREEK,,not_found,,,,,2026-09-26 03:44
+GPC_20656,a,PLANT YATES BREAKER AND HALF STATION,,not_found,,,,,2026-09-26 03:44
+GPC_20668,a,DRESDEN LINE PROTECTIVE RELAYING,,not_found,,,,,2026-09-26 03:44
+GPC_20684,a,CAMDEN INDUSTRIAL PARK,,not_found,,,,,2026-09-26 03:44
+GPC_20690,a,EAST POINT,East Point Primary Substation,auto_exact,33.6763499,-84.4629659,Georgia Power,https://www.openstreetmap.org/relation/14128477,2026-09-26 03:44
+GPC_20690,b,UNION CITY (WHITE),,not_found,,,,,2026-09-26 03:44
+GPC_20691,a,UNION CITY,,not_found,,,,,2026-09-26 03:44
+GPC_20691,b,YATES,Plant Yates,auto_exact,33.4576339,-84.8969584,Georgia Power,https://www.openstreetmap.org/way/1024438670,2026-09-26 03:44
+GPC_20717,a,TOMOCHICHI,,not_found,,,,,2026-09-26 03:44
+GPC_20736,a,TA REALTY ELLENWOOD,,not_found,,,,,2026-09-26 03:44
+GPC_20756,a,HATCH,,not_found,,,,,2026-09-26 03:44
+GPC_20756,b,WADLEY,Wadley Substation,auto_exact,32.8846571,-82.4158724,Georgia Power,https://www.openstreetmap.org/way/1005940922,2026-09-26 03:44
+GPC_20757,a,NORCROSS,Norcross Substation,auto_exact,33.9325571,-84.2134303,Georgia Power,https://www.openstreetmap.org/way/159758307,2026-09-26 03:44
+GPC_20757,b,NORTH DRUID HILLS,,not_found,,,,,2026-09-26 03:44
+GPC_20758,a,BAY CREEK,Bay Creek Substation,auto_exact,33.8681196,-83.8823506,Georgia Power,https://www.openstreetmap.org/way/175826909,2026-09-26 03:44
+GPC_20758,b,CONYERS,,not_found,,,,,2026-09-26 03:44
+GPC_20759,a,WINDER PRIMARY,Winder Primary Substation,auto_ambiguous,33.9954594,-83.7531307,Georgia Power,https://www.openstreetmap.org/way/171583070,2026-09-26 03:44
+GPC_20760,a,HOPEWELL,Hopewell Substation,auto_exact,34.1741923,-84.2834055,Georgia Power,https://www.openstreetmap.org/way/177931281,2026-09-26 03:44
+GPC_20761,a,ATKINSON,,not_found,,,,,2026-09-26 03:44
+GPC_20761,b,NORTHWEST,,not_found,,,,,2026-09-26 03:44
+GPC_20764,a,ATKINSON,,not_found,,,,,2026-09-26 03:44
+GPC_20764,b,NORTHSIDE DRIVE,,not_found,,,,,2026-09-26 03:44
+GPC_20767,a,ARKWRIGHT BUS AND JUMPER,,not_found,,,,,2026-09-26 03:44
+GPC_20768,a,SOUTH MACON,South Macon Substation,auto_exact,32.8203492,-83.6261978,Georgia Power,https://www.openstreetmap.org/way/170991653,2026-09-26 03:44
+GPC_20771,a,GULLATT ROAD TRANSMISSION IMPROVEMENTS,,not_found,,,,,2026-09-26 03:44
+GPC_20773,a,CLARKSBORO,,not_found,,,,,2026-09-26 03:44
+GPC_20773,b,WINDER PRIMARY,Winder Primary Substation,auto_ambiguous,33.9954594,-83.7531307,Georgia Power,https://www.openstreetmap.org/way/171583070,2026-09-26 03:44
+GPC_20774,a,VILLA RICA,Villa Rica Substation,auto_exact,33.7410224,-84.8548652,,https://www.openstreetmap.org/way/159758304,2026-09-26 03:44
+GPC_20776,a,DOUGLASVILLE,,not_found,,,,,2026-09-26 03:44
+GPC_20776,b,VILLA RICA,Villa Rica Substation,auto_exact,33.7410224,-84.8548652,,https://www.openstreetmap.org/way/159758304,2026-09-26 03:44
+GPC_20777,a,JACK MCDONOUGH,,not_found,,,,,2026-09-26 03:44
+GPC_20777,b,NORTHWEST (BLACK),,not_found,,,,,2026-09-26 03:44
+GPC_20778,a,DOYLE,Doyle Substation,auto_exact,33.8379245,-83.698786,Georgia Power,https://www.openstreetmap.org/way/176906118,2026-09-26 03:44
+GPC_20778,b,WINDER PRIMARY,Winder Primary Substation,auto_ambiguous,33.9954594,-83.7531307,Georgia Power,https://www.openstreetmap.org/way/171583070,2026-09-26 03:44
+GPC_20781,a,SUMMER LAKE,,not_found,,,,,2026-09-26 03:44
+GPC_20781,b,VILLA RICA,Villa Rica Substation,auto_exact,33.7410224,-84.8548652,,https://www.openstreetmap.org/way/159758304,2026-09-26 03:44
+GPC_20783,a,COLEMAN,Coleman Substation,auto_ambiguous,32.1077199,-81.226912,Georgia Power,https://www.openstreetmap.org/way/608270486,2026-09-26 03:44
+GPC_20783,b,DEAN FOREST,Dean Forest Substation,auto_exact,32.0835097,-81.1887223,Georgia Power,https://www.openstreetmap.org/way/121674829,2026-09-26 03:44
+GPC_20784,a,COLEMAN,Coleman Substation,auto_ambiguous,32.1077199,-81.226912,Georgia Power,https://www.openstreetmap.org/way/608270486,2026-09-26 03:44
+GPC_20784,b,MELDRIM,Meldrim Substation,auto_exact,32.1552821,-81.368377,Georgia Power,https://www.openstreetmap.org/way/121624363,2026-09-26 03:44
+GPC_20785,a,GOSHEN,Goshen Substation,auto_ambiguous,33.3197599,-81.9953118,Georgia Power,https://www.openstreetmap.org/way/52019569,2026-09-26 03:44
+GPC_20785,b,KRAFT,,not_found,,,,,2026-09-26 03:44
+GPC_20787,a,LITTLE OGEECHEE,Little Ogeechee Substation,auto_exact,32.0067859,-81.2531513,Georgia Power,https://www.openstreetmap.org/way/121701191,2026-09-26 03:44
+GPC_20789,a,JEFFERSON ROAD,Jefferson Rd Substation,auto_fuzzy,33.977796,-83.5794808,Georgia Power,https://www.openstreetmap.org/way/1017583912,2026-09-26 03:44
+GPC_20789,b,WINDER PRIMARY,Winder Primary Substation,auto_ambiguous,33.9954594,-83.7531307,Georgia Power,https://www.openstreetmap.org/way/171583070,2026-09-26 03:44
+GPC_20791,a,SHOAL CREEK,,not_found,,,,,2026-09-26 03:44
+GPC_20791,b,SOUTH HALL,South Hall Substation,auto_exact,34.2186104,-83.802581,Georgia Power,https://www.openstreetmap.org/way/159608145,2026-09-26 03:44
+GPC_20794,a,EVANS PRIMARY,Evans Primary Substation,auto_exact,33.5439942,-82.1686481,Georgia Power,https://www.openstreetmap.org/way/52103255,2026-09-26 03:44
+GPC_20794,b,THURMOND DAM  #6,,not_found,,,,,2026-09-26 03:44
+GPC_20796,a,MELDRIM,Meldrim Substation,auto_exact,32.1552821,-81.368377,Georgia Power,https://www.openstreetmap.org/way/121624363,2026-09-26 03:44
+GPC_20797,a,EAST VILLA RICA AREA SWITCHING STATION (CC IMPROVEMENT),,not_found,,,,,2026-09-26 03:44
+GPC_20849,a,CLIFTONDALE,,not_found,,,,,2026-09-26 03:44
+GPC_20849,b,LINE CREEK,,not_found,,,,,2026-09-26 03:44
+GPC_20857,a,NEW CAVENDER DRIVE,,not_found,,,,,2026-09-26 03:44
+GPC_20857,b,TRIBUTARY,,not_found,,,,,2026-09-26 03:44
+GPC_20858,a,ADAMSVILLE,,not_found,,,,,2026-09-26 03:44
+GPC_20858,b,BUZZARD ROOST,,not_found,,,,,2026-09-26 03:44
+GPC_20873,a,BONAIRE PRIMARY,Bonaire Primary Substation,auto_exact,32.5647949,-83.6000226,Georgia Power,https://www.openstreetmap.org/way/160308063,2026-09-26 03:44
+GPC_20874,a,BARNESVILLE PRIMARY,Barnesville Primary Substation,auto_exact,33.0320694,-84.2012582,Georgia Power,https://www.openstreetmap.org/way/564834100,2026-09-26 03:44
+GPC_20874,b,BARNESVILLE #1,Barnesville #1 Substation,auto_exact,33.0555442,-84.1529696,Georgia Power,https://www.openstreetmap.org/way/837495144,2026-09-26 03:44
+GPC_20989,a,RICE HOPE,,not_found,,,,,2026-09-26 03:44
+GPC_21006,a,BOULEVARD,Boulevard Substation,auto_exact,32.0412308,-81.1444637,Georgia Power,https://www.openstreetmap.org/way/381797798,2026-09-26 03:44
+GPC_21006,b,MAGNOLIA,Magnolia Substation,auto_exact,32.0226869,-81.0861807,Georgia Power,https://www.openstreetmap.org/way/121857248,2026-09-26 03:44
+GPC_21013,a,CAVENDER DRIVE,,not_found,,,,,2026-09-26 03:44
+GPC_21014,a,BUZZARD ROOST,,not_found,,,,,2026-09-26 03:44
+GPC_21014,b,CAVENDER DRIVE,,not_found,,,,,2026-09-26 03:44
+GPC_21022,a,OHARA BREAKER,,not_found,,,,,2026-09-26 03:44
+GPC_21023,a,DEAN FOREST,Dean Forest Substation,auto_exact,32.0835097,-81.1887223,Georgia Power,https://www.openstreetmap.org/way/121674829,2026-09-26 03:44
+GPC_21023,b,LITTLE OGEECHEE,Little Ogeechee Substation,auto_exact,32.0067859,-81.2531513,Georgia Power,https://www.openstreetmap.org/way/121701191,2026-09-26 03:44
+GPC_21036,a,BUZZARD ROOST,,not_found,,,,,2026-09-26 03:44
+GPC_21036,b,FACTORY SHOALS,,not_found,,,,,2026-09-26 03:44
+GPC_21046,a,THALMANN AND COLERAIN 23O KV LINE RELAY PANEL,,not_found,,,,,2026-09-26 03:44
+GPC_21047,a,BROADWAY,,not_found,,,,,2026-09-26 03:44
+GPC_21047,b,ECHECONNEE,,not_found,,,,,2026-09-26 03:44
+GPC_21048,a,FITZGERALD,Fitzgerald Substation,auto_exact,31.7293346,-83.2924114,,https://www.openstreetmap.org/way/617660021,2026-09-26 03:44
+GPC_21048,b,PITTS,,not_found,,,,,2026-09-26 03:44
+GPC_21053,a,MCEVER ROAD,McEver Road Substation,auto_exact,34.2728832,-83.8738012,Georgia Power,https://www.openstreetmap.org/way/1037359821,2026-09-26 03:44
+GPC_21053,b,SHOAL CREEK,,not_found,,,,,2026-09-26 03:44
+GPC_21062,a,ASHLEY PARK,,not_found,,,,,2026-09-26 03:44
+GPC_21062,b,WANSLEY,Wansley Substation,auto_exact,33.4109556,-85.030769,,https://www.openstreetmap.org/way/159784571,2026-09-26 03:44
+GPC_21063,a,FARLEY,,not_found,,,,,2026-09-26 03:44
+GPC_21063,b,TAZEWELL,,not_found,,,,,2026-09-26 03:44
+GPC_21069,a,SMART VALVES AT EAST VILLA RICA SWITCHING STATION,,not_found,,,,,2026-09-26 03:44
+GPC_21073,a,BIG SMARR,,not_found,,,,,2026-09-26 03:44
+GPC_21073,b,TOMOCHICHI,,not_found,,,,,2026-09-26 03:44
+GPC_21075,a,EAST WALTON,,not_found,,,,,2026-09-26 03:44
+GPC_21075,b,MIDDLE FORK,,not_found,,,,,2026-09-26 03:44
+GPC_21076,a,TALLBOT #2,,not_found,,,,,2026-09-26 03:44
+GPC_21076,b,TAZEWELL,,not_found,,,,,2026-09-26 03:44
+GPC_21077,a,ROCKVILLE,,not_found,,,,,2026-09-26 03:44
+GPC_21077,b,TIGER CREEK,Tiger Creek Substation,auto_exact,33.0945058,-82.9815846,Georgia Power,https://www.openstreetmap.org/way/170296000,2026-09-26 03:44
+GPC_21093,a,NORTH SPA,,not_found,,,,,2026-09-26 03:44
+GPC_21094,a,TIGER CREEK,Tiger Creek Substation,auto_exact,33.0945058,-82.9815846,Georgia Power,https://www.openstreetmap.org/way/170296000,2026-09-26 03:44
+GPC_21094,b,ROCKVILLE,,not_found,,,,,2026-09-26 03:44
+GPC_21097,a,EAST POINT,East Point Primary Substation,auto_exact,33.6763499,-84.4629659,Georgia Power,https://www.openstreetmap.org/relation/14128477,2026-09-26 03:44
+GPC_21097,b,TRIBUTARY,,not_found,,,,,2026-09-26 03:44
+GPC_21098,a,TRIBUTARY,,not_found,,,,,2026-09-26 03:44
+GPC_21098,b,THORNTON RD,,not_found,,,,,2026-09-26 03:44
+GPC_21099,a,PIO NONO,,not_found,,,,,2026-09-26 03:44
+GPC_21111,a,HARTWELL DAM,,not_found,,,,,2026-09-26 03:44
+GPC_21111,b,HARTWELL ENERGY,,not_found,,,,,2026-09-26 03:44
+GPC_21112,a,BARNESVILLE PRIMARY,Barnesville Primary Substation,auto_exact,33.0320694,-84.2012582,Georgia Power,https://www.openstreetmap.org/way/564834100,2026-09-26 03:44
+GPC_21112,b,THOMASTON,Thomaston Primary Substation,auto_exact,32.8999225,-84.3125168,Georgia Power,https://www.openstreetmap.org/way/160308061,2026-09-26 03:44
+GPC_21113,a,HARTWELL ENERGY,,not_found,,,,,2026-09-26 03:44
+GPC_21113,b,MIDDLE FORK,,not_found,,,,,2026-09-26 03:44
+GPC_21114,a,SOUTH GRIFFIN,,not_found,,,,,2026-09-26 03:44
+GPC_21116,a,GOSHEN,Goshen Substation,auto_ambiguous,33.3197599,-81.9953118,Georgia Power,https://www.openstreetmap.org/way/52019569,2026-09-26 03:44
+GPC_21118,a,ATHENA,Athena Substation,auto_exact,33.9764031,-83.3461189,Georgia Power,https://www.openstreetmap.org/way/171540528,2026-09-26 03:44
+GPC_21118,b,WARRENTON,Warrenton Primary Substation,auto_ambiguous,33.3805007,-82.687296,Georgia Power,https://www.openstreetmap.org/way/170296005,2026-09-26 03:44
+GPC_21123,a,TENASKA,,not_found,,,,,2026-09-26 03:44
+GPC_21123,b,WANSLEY,Wansley Substation,auto_exact,33.4109556,-85.030769,,https://www.openstreetmap.org/way/159784571,2026-09-26 03:44
+GPC_21128,a,GOAT ROCK REACTORS,,not_found,,,,,2026-09-26 03:44
+GPC_21129,a,ANNISTON,,not_found,,,,,2026-09-26 03:44
+GPC_21129,b,HAMMOND,Hammod Substation,auto_fuzzy,34.2512064,-85.34558,Georgia Power,https://www.openstreetmap.org/way/186429831,2026-09-26 03:44
+GPC_21130,a,NORTH GEORGIA DATA NETWORK,,not_found,,,,,2026-09-26 03:44
+GPC_21131,a,POND FORK,,not_found,,,,,2026-09-26 03:44
+GPC_21131,b,MIDWAY,,not_found,,,,,2026-09-26 03:44
+GPC_21137,a,CONYERS,,not_found,,,,,2026-09-26 03:44
+GPC_21137,b,CORNISH MOUNTAIN,,not_found,,,,,2026-09-26 03:44
+GPC_21138,a,GLENWOOD SPRINGS,,not_found,,,,,2026-09-26 03:44
+GPC_21138,b,PORTERDALE PRIMARY,,not_found,,,,,2026-09-26 03:44
+GPC_21139,a,GRADY,Gray Substation,auto_fuzzy,32.9953281,-83.5635642,Georgia Power,https://www.openstreetmap.org/way/344331787,2026-09-26 03:44
+GPC_21139,b,MORROW (WHITE),Morrow Substation,auto_exact,33.605931,-84.3334617,Georgia Power,https://www.openstreetmap.org/way/171479107,2026-09-26 03:44
+GPC_21140,a,BONAIRE PRIMARY,Bonaire Primary Substation,auto_exact,32.5647949,-83.6000226,Georgia Power,https://www.openstreetmap.org/way/160308063,2026-09-26 03:44
+GPC_21140,b,EASTMAN PRIMARY,Eastman Primary Substation,auto_exact,32.2132993,-83.1614216,,https://www.openstreetmap.org/way/164880657,2026-09-26 03:44
+GPC_21141,a,LLOYD SHOALS,Lloyd Shoals Dam,auto_exact,33.3206142,-83.8410088,Georgia Power,https://www.openstreetmap.org/way/674159021,2026-09-26 03:44
+GPC_21141,b,PORTERDALE PRIMARY,,not_found,,,,,2026-09-26 03:44
+GPC_21142,a,CONYERS,,not_found,,,,,2026-09-26 03:44
+GPC_21142,b,KLONDIKE,Klondike Substation,auto_exact,33.6369768,-84.124487,Georgia Power,https://www.openstreetmap.org/way/159784541,2026-09-26 03:44
