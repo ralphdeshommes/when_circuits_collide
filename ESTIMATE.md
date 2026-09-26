@@ -60,8 +60,13 @@ Unit cost                 ~$3.66M per mile
 $3.66M/mile is a plausible figure for new 230 kV construction, which is a useful
 check that we have read the document correctly.
 
-This number is now stored in `projects.csv` under a new `cost` column, so future
-estimates can use real figures rather than assumed ones.
+All 44 DESC project costs from the PDF are now stored in `projects.csv` under the
+`cost` column ($699,613,389 in total), so future estimates can use real figures
+rather than assumed ones. Georgia Power's remain blank because they are redacted
+in the public IRP. Two DESC entries carry a `cost_note`: DESC_26, whose stated
+$30M total exceeds the $20M its yearly columns sum to, and DESC_40 at $1.1M,
+below the $2M threshold in the document's own title. Both are recorded as the
+PDF prints them.
 
 ### Step 2 — Which costs two neighbouring projects could share  *(assumption A2)*
 

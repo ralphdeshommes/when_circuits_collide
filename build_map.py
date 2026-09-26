@@ -87,6 +87,11 @@ def build_projects(df):
             "date": clean(r.in_service_date),
             "status": clean(r.status),
             "confidence": clean(r.location_confidence),
+            # DESC publishes per-project costs; Georgia Power redacts them in the
+            # public IRP, so a null here is a known redaction, not missing data.
+            "cost": int(r.cost) if pd.notna(r.cost) else None,
+            "cost_note": clean(r.cost_note),
+            "cost_redacted": pd.isna(r.cost) and str(r.sponsor) != "DESC",
             "source": clean(r.source),
             "source_id": clean(r.source_id),
             # endpoint names and coordinates; b is null for single-ended projects

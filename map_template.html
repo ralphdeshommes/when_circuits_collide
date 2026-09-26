@@ -89,6 +89,13 @@
   .pop-title { font-weight: 600; margin-bottom: 6px; }
   .pop-row { display: flex; gap: 8px; }
   .pop-row .k { color: var(--muted); flex: 0 0 96px; }
+  .cost-redacted { color: var(--muted); font-style: italic; }
+  .cost-flag { font-size: 9.5px; text-transform: uppercase; letter-spacing: .3px;
+               background: #fdf6e3; border: 1px solid #ecdcb0; color: #7a5c17;
+               border-radius: 8px; padding: 1px 5px; margin-left: 4px; }
+  .cost-note { font-size: 10.5px; line-height: 1.35; color: #7a5c17;
+               background: #fdf6e3; border: 1px solid #ecdcb0; border-radius: 4px;
+               padding: 4px 6px; margin-top: 4px; }
   .pop-src { margin-top: 8px; padding-top: 7px; border-top: 1px solid var(--line);
              color: var(--muted); font-size: 11.5px; }
 
@@ -176,12 +183,29 @@ function projectPopup(p) {
     ${row('Project ID', p.id)}
     ${row('Utility', p.utility)}
     ${row('Endpoints', ends, true)}
+    ${row('Cost', costLine(p), true)}
     ${row('In service', p.date)}
     ${row('Status', p.status)}
     ${row('Confidence', confLabel(p.confidence))}
     ${row('Overlaps', p.overlaps)}
     <div class="pop-src"><b>Source:</b> ${esc(p.source || 'n/a')}
       ${p.source_id ? ' &middot; entry ' + esc(p.source_id) : ''}</div>`;
+}
+
+/* Cost line for a project popup. DESC publishes per-project totals; Georgia
+   Power redacts them in its public IRP, so we say so rather than showing a
+   blank that reads like missing data. */
+function costLine(p) {
+  if (p.cost === null) {
+    return p.cost_redacted
+      ? '<span class="cost-redacted">redacted in public filing</span>'
+      : '<span class="cost-redacted">not published</span>';
+  }
+  const money = '$' + p.cost.toLocaleString('en-US');
+  return p.cost_note
+    ? `${money} <span class="cost-flag" title="${esc(p.cost_note)}">note</span>`
+      + `<div class="cost-note">${esc(p.cost_note)}</div>`
+    : money;
 }
 
 /* ============================================================================
