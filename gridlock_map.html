@@ -135,47 +135,25 @@
   .chk input[type=checkbox] { accent-color: var(--control); }
   select { flex: 1; padding: 4px 6px; border: 1px solid var(--line); border-radius: 6px; background: var(--panel); color: var(--ink); }
   .chk { display: flex; gap: 8px; align-items: center; color: var(--ink); }
-  /* the ranked list now lives in a group like the filters, so it scrolls within
-     its own box rather than taking whatever height is left */
-  #listwrap { max-height: 46vh; overflow-y: auto; }
-
-  /* The map key is a floating legend on the map itself, tucked under the layer
-     control it belongs beside, rather than a slab at the bottom of the sidebar.
-     It is built from the same tokens as everything else, so it follows the
-     theme with no extra rules. */
-  #mapkey { position: absolute; top: 66px; right: 10px; width: 246px;
-            max-width: calc(100% - 20px); z-index: 802; background: var(--panel);
-            border: 1px solid var(--line); border-radius: 10px;
-            box-shadow: 0 4px 16px var(--shadow); overflow: hidden; }
-  #mapkey > summary { display: flex; align-items: center; gap: 6px; cursor: pointer;
-                      padding: 8px 11px; font-size: 12px; font-weight: 600; color: var(--ink);
-                      list-style: none; }
+  #listwrap { flex: 1; overflow-y: auto; min-height: 0; }
+  /* The ranked list is the deliverable, so it sits high in the panel and the
+     map key -- which is long and read once -- folds away underneath it. */
+  #mapkey { border-top: 1px solid var(--line); flex: 0 0 auto; max-height: 45%; overflow-y: auto; }
+  #mapkey > summary { position: sticky; top: 0; z-index: 2; background: var(--panel);
+                      border-bottom: 1px solid transparent;
+                      padding: 9px 18px; cursor: pointer; font-size: 12.5px; font-weight: 600;
+                      color: var(--muted); list-style: none; }
   #mapkey > summary::-webkit-details-marker { display: none; }
-  #mapkey > summary::before { content: "\25B8"; color: var(--muted); font-size: 10px;
-                              transition: transform .15s; }
+  #mapkey > summary::before { content: "\25B8 "; display: inline-block; transition: transform .15s; }
   #mapkey[open] > summary::before { transform: rotate(90deg); }
-  #mapkey > summary:hover { background: var(--hover); }
-  #mapkey .kh { margin-left: auto; font-weight: 400; font-size: 11px; color: var(--muted); }
-  #mapkey[open] .kh::after { content: "hide"; }
-  #mapkey:not([open]) .kh::after { content: "show"; }
-  #mapkey .kh { font-size: 0; }
-  #mapkey .kh::after { font-size: 11px; }
-  #mapkey .kbody { border-top: 1px solid var(--line); padding: 10px 11px 11px;
-                   max-height: 46vh; overflow-y: auto; }
-  /* one symbol per line in a narrow panel, rather than the sidebar's wrapping row */
-  #mapkey .legend { display: grid; gap: 7px; margin: 0; font-size: 11.5px; color: var(--muted); }
-  #mapkey .legend span { display: flex; align-items: center; gap: 2px; line-height: 1.3; }
-  #mapkey .howto-wrap { margin-top: 10px; border-top: 1px solid var(--line); padding-top: 8px; }
-  #mapkey .howto-wrap > summary { cursor: pointer; font-size: 11.5px; font-weight: 600;
-                                  color: var(--muted); list-style: none; }
-  #mapkey .howto-wrap > summary::-webkit-details-marker { display: none; }
-  #mapkey .howto-wrap > summary::before { content: "\25B8 "; transition: transform .15s;
-                                          display: inline-block; font-size: 9px; }
-  #mapkey .howto-wrap[open] > summary::before { transform: rotate(90deg); }
-  #mapkey .howto-wrap > summary:hover { color: var(--ink); }
-  #mapkey .howto { margin: 8px 0 2px; padding-left: 16px; font-size: 11.5px; line-height: 1.55;
+  #mapkey[open] > summary { border-bottom-color: var(--line); }
+  #mapkey[open] > summary::after { content: "Hide"; float: right; font-weight: 400;
+                                   font-size: 11px; color: var(--muted); }
+  #mapkey > summary:hover { color: var(--ink); background: var(--hover); }
+  #mapkey .legend, #mapkey > .sub { padding-left: 18px; padding-right: 18px; }
+  #mapkey .howto { margin: 2px 0 14px; padding: 0 18px 0 34px; font-size: 12px; line-height: 1.6;
                    color: var(--muted); }
-  #mapkey .howto li { margin-bottom: 6px; }
+  #mapkey .howto li { margin-bottom: 7px; }
   #mapkey .howto li::marker { color: var(--marker); }
   #mapkey .howto b { color: var(--ink); font-weight: 600; }
   #listhead { padding: 10px 18px 4px; font-weight: 600; display: flex; justify-content: space-between; }
@@ -198,7 +176,7 @@
   #detail { position: absolute; right: 14px; bottom: 26px; width: 390px; max-width: calc(100% - 28px); max-height: 56%; overflow-y: auto; z-index: 800;
     background: var(--panel); border: 1px solid var(--line); border-radius: 12px; box-shadow: 0 8px 28px var(--shadow); padding: 12px 14px; display: none; }
   /* hover readout: top-right, clear of #detail which sits bottom-right */
-  #hoverinfo { position: absolute; left: 14px; bottom: 26px; width: 270px; max-width: calc(100% - 28px);
+  #hoverinfo { position: absolute; right: 58px; top: 14px; width: 270px; max-width: calc(100% - 28px);
                z-index: 801; background: var(--panel); border: 1px solid var(--line); border-radius: 8px;
                box-shadow: 0 4px 16px var(--shadow); padding: 10px 12px; pointer-events: none; }
   #hoverinfo .ht { font-size: 12px; font-weight: 700; }
@@ -280,10 +258,6 @@
     </header>
     <section class="controls" aria-label="Filters">
       <div class="row"><label for="miles">Max distance</label><input id="miles" type="range" min="2" max="25" step="1" value="25"><output id="miles-out">25 mi</output></div>
-      <details class="grp" id="grp-list" open>
-        <summary><span id="listtitle">Top coordination opportunities</span><span class="state" id="listcount"></span></summary>
-        <div id="listwrap"><div id="list"></div></div>
-      </details>
       <details class="grp" id="grp-filter">
         <summary>Filters<span class="state" id="st-filter"></span></summary>
         <div class="row"><label for="gap">Time gap</label>
@@ -300,26 +274,11 @@
         <label class="chk"><input id="partners" type="checkbox"> Georgia ITS partners</label>
       </details>
     </section>
-  </aside>
-  <main id="mapwrap">
-    <div id="map" aria-label="Map of planned projects"></div>
-    <div id="hoverinfo" aria-live="polite" hidden></div>
+    <div id="listhead"><div id="listtitle">Top coordination opportunities</div><span id="listcount"></span></div>
+    <div id="listwrap"><div id="list"></div></div>
     <details id="mapkey">
-      <summary><span class="kt">Legend</span><span class="kh">show</span></summary>
-      <div class="kbody">
+      <summary>Map key &amp; how to read it</summary>
       <div class="legend">
-        <span><svg width="40" height="14" viewBox="0 0 40 14" aria-hidden="true"><line x1="6" y1="7" x2="34" y2="7" stroke="var(--desc)" stroke-width="3.5"/><circle cx="6" cy="7" r="5" fill="var(--desc)" stroke="var(--panel)" stroke-width="1.5"/><circle cx="34" cy="7" r="5" fill="var(--desc)" stroke="var(--panel)" stroke-width="1.5"/></svg>Dominion project</span>
-        <span><svg width="40" height="14" viewBox="0 0 40 14" aria-hidden="true"><line x1="6" y1="7" x2="34" y2="7" stroke="var(--gpc)" stroke-width="3.5"/><circle cx="6" cy="7" r="5" fill="var(--gpc)" stroke="var(--panel)" stroke-width="1.5"/><circle cx="34" cy="7" r="5" fill="var(--gpc)" stroke="var(--panel)" stroke-width="1.5"/></svg>Georgia Power project</span>
-        <span><svg width="34" height="14" viewBox="0 0 34 14" aria-hidden="true"><rect x="2" y="1" width="12" height="12" rx="2" fill="var(--desc)" stroke="var(--panel)" stroke-width="1.5"/><circle cx="26" cy="7" r="6" fill="var(--gpc)" stroke="var(--panel)" stroke-width="1.5"/></svg>single location: square = Dominion, circle = Georgia Power</span>
-        <span><svg width="34" height="14" viewBox="0 0 34 14" aria-hidden="true"><rect x="2" y="1" width="12" height="12" rx="2" fill="var(--panel)" stroke="var(--desc)" stroke-width="2"/><circle cx="26" cy="7" r="6" fill="var(--panel)" stroke="var(--gpc)" stroke-width="2"/></svg>hollow = overlaps nothing</span>
-        <span><span class="num dom" style="width:18px;height:18px;line-height:14px;font-size:10px">D</span>Dominion project's centre (midpoint of its line)</span>
-        <span><span class="num sel" style="width:18px;height:18px;line-height:14px;font-size:10px">G</span>Georgia Power project's centre (midpoint of its line)</span>
-        <span><span class="num" style="width:18px;height:18px;line-height:14px;font-size:10px;margin-right:2px">1</span><span class="num dom" style="width:18px;height:18px;line-height:14px;font-size:10px">1</span>numbers = the other company's projects inside the circle</span>
-        <span><i class="ring"></i>25-mile radius</span>
-        <span><i style="border-color:var(--ovl)"></i>centre-to-centre distance</span>
-      </div>
-        <details class="howto-wrap">
-          <summary>How to read the map</summary>
         <div style="flex-basis:100%">
           <svg viewBox="0 0 380 78" style="display:block;width:100%;max-width:380px" role="img" aria-label="Key: two substations joined by a line make one project; a project with one location is a single shape with no line">
             <text x="105" y="14" text-anchor="middle" font-size="11" font-weight="600" fill="currentColor">project = the power line</text>
@@ -336,6 +295,16 @@
             <text x="300" y="71" text-anchor="middle" font-size="10.5" fill="var(--muted)">no line</text>
           </svg>
         </div>
+        <span><svg width="40" height="14" viewBox="0 0 40 14" aria-hidden="true"><line x1="6" y1="7" x2="34" y2="7" stroke="var(--desc)" stroke-width="3.5"/><circle cx="6" cy="7" r="5" fill="var(--desc)" stroke="var(--panel)" stroke-width="1.5"/><circle cx="34" cy="7" r="5" fill="var(--desc)" stroke="var(--panel)" stroke-width="1.5"/></svg>Dominion project</span>
+        <span><svg width="40" height="14" viewBox="0 0 40 14" aria-hidden="true"><line x1="6" y1="7" x2="34" y2="7" stroke="var(--gpc)" stroke-width="3.5"/><circle cx="6" cy="7" r="5" fill="var(--gpc)" stroke="var(--panel)" stroke-width="1.5"/><circle cx="34" cy="7" r="5" fill="var(--gpc)" stroke="var(--panel)" stroke-width="1.5"/></svg>Georgia Power project</span>
+        <span><svg width="34" height="14" viewBox="0 0 34 14" aria-hidden="true"><rect x="2" y="1" width="12" height="12" rx="2" fill="var(--desc)" stroke="var(--panel)" stroke-width="1.5"/><circle cx="26" cy="7" r="6" fill="var(--gpc)" stroke="var(--panel)" stroke-width="1.5"/></svg>single location: square = Dominion, circle = Georgia Power</span>
+        <span><svg width="34" height="14" viewBox="0 0 34 14" aria-hidden="true"><rect x="2" y="1" width="12" height="12" rx="2" fill="var(--panel)" stroke="var(--desc)" stroke-width="2"/><circle cx="26" cy="7" r="6" fill="var(--panel)" stroke="var(--gpc)" stroke-width="2"/></svg>hollow = overlaps nothing</span>
+        <span><span class="num dom" style="width:18px;height:18px;line-height:14px;font-size:10px">D</span>Dominion project's centre (midpoint of its line)</span>
+        <span><span class="num sel" style="width:18px;height:18px;line-height:14px;font-size:10px">G</span>Georgia Power project's centre (midpoint of its line)</span>
+        <span><span class="num" style="width:18px;height:18px;line-height:14px;font-size:10px;margin-right:2px">1</span><span class="num dom" style="width:18px;height:18px;line-height:14px;font-size:10px">1</span>numbers = the other company's projects inside the circle</span>
+        <span><i class="ring"></i>25-mile radius</span>
+        <span><i style="border-color:var(--ovl)"></i>centre-to-centre distance</span>
+      </div>
       <ul class="howto">
         <li>Two dots joined by a line are one project: the dots are its substations. The line is drawn
             straight, not along the real route.</li>
@@ -350,9 +319,11 @@
         <li><b>Red glow</b> means the project takes part in an overlap.</li>
         <li><b>Dotted</b> means a low-confidence location.</li>
       </ul>
-        </details>
-      </div>
     </details>
+  </aside>
+  <main id="mapwrap">
+    <div id="map" aria-label="Map of planned projects"></div>
+    <div id="hoverinfo" aria-live="polite" hidden></div>
     <section id="detail" aria-live="polite"></section>
   </main>
 </div>

@@ -261,7 +261,6 @@ try {
   // to state what is set or hiding them hides the state of the map.
   out.ctl_groups = document.querySelectorAll('.controls .grp').length;
   out.ctl_closed_by_default = !el('grp-filter').open && !el('grp-display').open;
-  out.ctl_list_open_by_default = el('grp-list').open;
   out.ctl_slider_stays_visible = el('miles').offsetParent !== null;
   out.ctl_state_default = [el('st-filter').textContent, el('st-display').textContent];
   el('gap').value = '365'; fire(el('gap'));
@@ -314,41 +313,29 @@ try {
   out.type_id_is_mono = idEl ? /mono/i.test(getComputedStyle(idEl).fontFamily) : null;
   out.type_tabular = getComputedStyle(document.body).fontVariantNumeric;
 
-  // The ranked list is a group in the sidebar, open by default; the legend is a
-  // floating panel on the map, collapsed by default.
+  // The ranked list must be reachable without scrolling past the map key.
   const topOf = sel => Math.round(document.querySelector(sel).getBoundingClientRect().top);
-  out.side_list_group_open = el('grp-list').open;
-  out.side_list_top = topOf('#grp-list');
-  out.side_list_below_slider = topOf('#grp-list') > topOf('#miles');
+  out.side_list_top = topOf('#listhead');
+  out.side_key_top = topOf('#mapkey');
+  out.side_list_above_key = topOf('#listhead') < topOf('#mapkey');
+  out.side_key_collapsed = !el('mapkey').open;
   out.side_cards_in_view = [...document.querySelectorAll('.card')]
     .filter(c => c.getBoundingClientRect().bottom <= window.innerHeight).length;
-
-  // the legend sits over the map, under the layer control, not in the sidebar
-  const kr = el('mapkey').getBoundingClientRect();
-  const mr = el('map').getBoundingClientRect();
-  const layers = document.querySelector('.leaflet-control-layers');
-  out.key_on_map = kr.left >= mr.left && kr.right <= mr.right + 1;
-  out.key_top_right = (mr.right - kr.right) < 40 && kr.top < mr.top + 160;
-  out.key_below_layer_control = layers
-    ? kr.top >= layers.getBoundingClientRect().bottom - 1 : null;
-  out.key_collapsed = !el('mapkey').open;
   el('mapkey').open = true;
-  out.key_expands = !!document.querySelector('#mapkey .legend');
-  out.key_rows = document.querySelectorAll('#mapkey .legend span').length;
-  // the prose is one more click in, so the legend leads with symbols
-  const hw = document.querySelector('#mapkey .howto-wrap');
-  out.key_howto_nested = !!hw && !hw.open;
-  if (hw) hw.open = true;
+  out.side_key_expands = !!document.querySelector('#mapkey .legend');
+  // Opened, the panel scrolls internally. The summary has to stay put or there
+  // is no visible way to close it again.
+  const sum = document.querySelector('#mapkey > summary');
+  out.key_summary_sticky = getComputedStyle(sum).position === 'sticky';
+  el('mapkey').scrollTop = el('mapkey').scrollHeight;
+  const sr = sum.getBoundingClientRect(), kr = el('mapkey').getBoundingClientRect();
+  out.key_summary_visible_when_scrolled = sr.top >= kr.top - 1 && sr.bottom <= kr.bottom + 1;
   out.key_howto_bullets = document.querySelectorAll('#mapkey .howto li').length;
   out.key_no_wall_of_text = !el('mapkey').textContent
     .includes('a project with only one location found has no line and is a single');
-  document.querySelector('#mapkey > summary').click();
+  sum.click();
   out.key_collapses_on_click = !el('mapkey').open;
   el('mapkey').open = false;
-  // the hover readout moved off the top-right so the two do not stack
-  const hi = el('hoverinfo').getBoundingClientRect();
-  out.key_clear_of_hover = !(kr.right > hi.left && kr.left < hi.right
-                             && kr.bottom > hi.top && kr.top < hi.bottom);
 
   const g = el('group');
   out.top_merged_cards = cards();
@@ -592,9 +579,9 @@ def test_map():
           "from 55 pairs" in r["count_default"], r["count_default"])
     # The ranked list is the deliverable, so it must be visible in the sidebar
     # without scrolling past the map key, which is long and read once.
-    check("the sidebar is three groups: the list open, the controls closed",
-          r.get("ctl_groups") == 3 and r.get("ctl_closed_by_default")
-          and r.get("ctl_list_open_by_default"), r.get("ctl_groups"))
+    check("the controls collapse into two groups",
+          r.get("ctl_groups") == 2 and r.get("ctl_closed_by_default"),
+          r.get("ctl_groups"))
     check("the distance slider stays visible", r.get("ctl_slider_stays_visible"))
     check("collapsed groups report their state",
           r.get("ctl_state_default") == ["none", "default"], r.get("ctl_state_default"))
@@ -630,20 +617,13 @@ def test_map():
     check("figures are tabular so columns line up",
           "tabular-nums" in (r.get("type_tabular") or ""), r.get("type_tabular"))
 
-    check("the ranked list is a group, open by default",
-          r.get("side_list_group_open"))
-    check("it sits under the distance slider", r.get("side_list_below_slider"))
-    check("at least one ranked card is visible without scrolling",
-          r.get("side_cards_in_view", 0) >= 1, r.get("side_cards_in_view"))
-    check("the legend floats on the map, not in the sidebar", r.get("key_on_map"))
-    check("it sits top-right, under the layer control",
-          r.get("key_top_right") and r.get("key_below_layer_control") is not False)
-    check("it does not overlap the hover readout", r.get("key_clear_of_hover"))
-    check("it is collapsed by default", r.get("key_collapsed"))
-    check("it expands to the symbol key", r.get("key_expands")
-          and r.get("key_rows", 0) >= 7, r.get("key_rows"))
+    check("the ranked list sits above the map key", r.get("side_list_above_key"),
+          (r.get("side_list_top"), r.get("side_key_top")))
+    check("the map key is folded away by default", r.get("side_key_collapsed"))
+    check("the map key still expands", r.get("side_key_expands"))
+    check("its header stays put when the panel is scrolled",
+          r.get("key_summary_sticky") and r.get("key_summary_visible_when_scrolled"))
     check("clicking the header collapses it again", r.get("key_collapses_on_click"))
-    check("the prose is nested one level in, collapsed", r.get("key_howto_nested"))
     check("the how-to is a list, not one long paragraph",
           r.get("key_howto_bullets", 0) >= 5 and r.get("key_no_wall_of_text"),
           r.get("key_howto_bullets"))
