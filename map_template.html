@@ -87,18 +87,18 @@
      utility identity, so colour is never the only thing saying which is which.
      Figures here are proportional -- tabular widths make a big number look
      loose -- while the body keeps tabular for the columns in the lists. */
-  .kpis { margin-top: 12px; background: var(--bg); border-radius: var(--radius); padding: 13px 15px; }
+  .kpis { margin-top: 10px; background: var(--bg); border-radius: var(--radius); padding: 10px 13px; }
   .hero { display: flex; align-items: baseline; gap: 12px; }
-  .hero b { font-size: 48px; line-height: .95; font-weight: 600; letter-spacing: -.03em;
+  .hero b { font-size: 38px; line-height: .95; font-weight: 600; letter-spacing: -.03em;
             font-variant-numeric: proportional-nums; }
-  .hero .lab { font-size: 13.5px; font-weight: 600; line-height: 1.25; }
+  .hero .lab { font-size: 13px; font-weight: 600; line-height: 1.25; }
   .hero .lab small { display: block; font-size: 11.5px; font-weight: 400; color: var(--muted);
                      margin-top: 2px; }
-  .kpi-row { display: flex; gap: 18px; margin-top: 12px; padding-top: 11px;
+  .kpi-row { display: flex; gap: 13px; flex-wrap: wrap; margin-top: 9px; padding-top: 9px;
              border-top: 1px solid var(--line); }
   /* the derived share sits on its own line rather than wrapping off the end of
      the two counts it is derived from */
-  .kpi-note { margin-top: 7px; font-size: 11.5px; color: var(--muted); }
+  .kpi-note { display: none; }
   .kpi-note b { font-size: 13.5px; color: var(--ink); font-weight: 600;
                 font-variant-numeric: proportional-nums; }
   .kpi { display: flex; align-items: baseline; gap: 5px; font-size: 11.5px; color: var(--muted); }
@@ -108,55 +108,50 @@
   .kpi .sw.d { background: var(--desc); } .kpi .sw.g { background: var(--gpc); }
   .legend { display: flex; gap: 14px; flex-wrap: wrap; margin-top: 10px; font-size: 12px; color: var(--muted); }
   .legend i { display: inline-block; width: 18px; height: 0; border-top: 4px solid; vertical-align: middle; margin-right: 5px; }
-  /* The controls used to be nine stacked rows, four of them long enough to wrap
-     onto a second line. They are now one visible slider plus two disclosure
-     groups whose summaries state what is set, so the panel stays quiet until
-     you need it. */
-  .controls { padding: 14px 18px 16px; border-bottom: 1px solid var(--line); display: grid;
-              gap: 10px; font-size: 12.5px; }
-  .grp { border: 1px solid var(--line); border-radius: 8px; background: var(--bg); }
-  .grp > summary { display: flex; align-items: center; gap: 8px; padding: 9px 11px; cursor: pointer;
-                   font-weight: 600; color: var(--ink); list-style: none; border-radius: 8px; }
-  .grp > summary::-webkit-details-marker { display: none; }
-  .grp > summary::before { content: "\25B8"; color: var(--muted); transition: transform .15s;
-                           display: inline-block; font-size: 10px; }
-  .grp[open] > summary::before { transform: rotate(90deg); }
-  .grp > summary:hover { background: var(--hover); }
-  .grp .state { margin-left: auto; font-weight: 400; color: var(--muted); font-size: 11.5px; }
-  .grp[open] > summary { border-bottom: 1px solid var(--line); border-radius: 8px 8px 0 0; }
-  .grp > .row, .grp > .chk { margin: 0 11px; }
-  .grp > .row:first-of-type { margin-top: 10px; }
-  .grp > .chk:last-of-type { margin-bottom: 11px; }
-  .grp > .row + .row, .grp > .chk + .chk { margin-top: 9px; }
-  .grp > .row:last-of-type { margin-bottom: 11px; }
   .row { display: flex; align-items: center; gap: 8px; }
   .row label { min-width: 92px; color: var(--muted); }
   .row input[type=range] { flex: 1; accent-color: var(--control); }
   .chk input[type=checkbox] { accent-color: var(--control); }
-  select { flex: 1; padding: 4px 6px; border: 1px solid var(--line); border-radius: 6px; background: var(--panel); color: var(--ink); }
-  .chk { display: flex; gap: 8px; align-items: center; color: var(--ink); }
+  select { flex: 1; padding: 5px 7px; border: 1px solid var(--line); border-radius: 6px;
+           background: var(--panel); color: var(--ink); font: inherit; font-size: 12.5px; }
+  .chk { display: flex; gap: 8px; align-items: center; color: var(--ink); font-size: 12.5px; }
+
+  /* The panel is three tabs under the headline figures. The ranked list is the
+     deliverable, so it gets its own tab and every pixel below the tab row;
+     filters and the map key are peers one click away, taking no permanent
+     space. Previously the list was fourth in a stack of five and started
+     around 420px down. */
+  .tabs { display: flex; gap: 2px; padding: 0 12px; border-bottom: 1px solid var(--line);
+          flex: 0 0 auto; }
+  .tab { appearance: none; border: 0; background: none; cursor: pointer; font: inherit;
+         font-size: 12.5px; font-weight: 600; color: var(--muted); padding: 10px 10px 9px;
+         border-bottom: 2px solid transparent; margin-bottom: -1px; display: flex;
+         align-items: center; gap: 5px; }
+  .tab:hover { color: var(--ink); }
+  .tab[aria-selected="true"] { color: var(--ink); border-bottom-color: var(--control); }
+  /* a filter that is set must be visible from the tab, or hiding the controls
+     hides why the list is short */
+  .tab .dot { width: 6px; height: 6px; border-radius: 50%; background: var(--gpc); }
+
+  .pane { display: flex; flex-direction: column; min-height: 0; flex: 1; overflow: hidden; }
+  .pane[hidden] { display: none; }
+  .paneTop { flex: 0 0 auto; padding: 12px 18px 0; }
   #listwrap { flex: 1; overflow-y: auto; min-height: 0; }
-  /* The ranked list is the deliverable, so it sits high in the panel and the
-     map key -- which is long and read once -- folds away underneath it. */
-  #mapkey { border-top: 1px solid var(--line); flex: 0 0 auto; max-height: 45%; overflow-y: auto; }
-  #mapkey > summary { position: sticky; top: 0; z-index: 2; background: var(--panel);
-                      border-bottom: 1px solid transparent;
-                      padding: 9px 18px; cursor: pointer; font-size: 12.5px; font-weight: 600;
-                      color: var(--muted); list-style: none; }
-  #mapkey > summary::-webkit-details-marker { display: none; }
-  #mapkey > summary::before { content: "\25B8 "; display: inline-block; transition: transform .15s; }
-  #mapkey[open] > summary::before { transform: rotate(90deg); }
-  #mapkey[open] > summary { border-bottom-color: var(--line); }
-  #mapkey[open] > summary::after { content: "Hide"; float: right; font-weight: 400;
-                                   font-size: 11px; color: var(--muted); }
-  #mapkey > summary:hover { color: var(--ink); background: var(--hover); }
-  #mapkey .legend, #mapkey > .sub { padding-left: 18px; padding-right: 18px; }
-  #mapkey .howto { margin: 2px 0 14px; padding: 0 18px 0 34px; font-size: 12px; line-height: 1.6;
-                   color: var(--muted); }
-  #mapkey .howto li { margin-bottom: 7px; }
-  #mapkey .howto li::marker { color: var(--marker); }
-  #mapkey .howto b { color: var(--ink); font-weight: 600; }
-  #listhead { padding: 10px 18px 4px; font-weight: 600; display: flex; justify-content: space-between; }
+  #pane-filters, #pane-key { overflow-y: auto; padding: 14px 18px 18px; gap: 10px; }
+  .subhead { font-size: 11.5px; font-weight: 700; color: var(--muted); letter-spacing: .03em;
+             text-transform: uppercase; margin-top: 6px; }
+  #pane-filters .row + .row, #pane-filters .chk + .chk { margin-top: 9px; }
+  #pane-filters .subhead + .chk { margin-top: 8px; }
+
+  #pane-key .legend { display: grid; gap: 8px; margin: 0; font-size: 12px; color: var(--muted); }
+  #pane-key .legend span { display: flex; align-items: center; gap: 2px; line-height: 1.35; }
+  #pane-key .legend > div[style] { margin-bottom: 4px; }
+  #pane-key .howto { margin: 14px 0 0; padding-left: 18px; font-size: 12px; line-height: 1.6;
+                     color: var(--muted); border-top: 1px solid var(--line); padding-top: 12px; }
+  #pane-key .howto li { margin-bottom: 7px; }
+  #pane-key .howto li::marker { color: var(--marker); }
+  #pane-key .howto b { color: var(--ink); font-weight: 600; }
+  #listhead { padding: 12px 0 4px; font-weight: 600; display: flex; justify-content: space-between; }
   #listhead span { color: var(--muted); font-weight: 400; font-size: 12px; }
   .morebtn { display: block; width: calc(100% - 24px); margin: 6px 12px 12px; padding: 7px 10px;
              font: inherit; font-size: 12px; color: var(--ink); background: var(--btn);
@@ -252,32 +247,41 @@
         <div class="kpi-row">
           <div class="kpi"><i class="sw d"></i><b id="k-desc">-</b><span>Dominion</span></div>
           <div class="kpi"><i class="sw g"></i><b id="k-gpc">-</b><span>Georgia Power</span></div>
+          <div class="kpi"><b id="k-pct2">-</b><span>involved</span></div>
         </div>
-        <div class="kpi-note"><b id="k-pct">-</b> of Dominion projects take part in one</div>
+        <div class="kpi-note"><b id="k-pct">-</b></div>
       </div>
-    </header>
-    <section class="controls" aria-label="Filters">
+    </header>    <div class="tabs" role="tablist" aria-label="Side panel sections">
+      <button class="tab" id="tab-list" role="tab" aria-selected="true" aria-controls="pane-list">Opportunities</button>
+      <button class="tab" id="tab-filters" role="tab" aria-selected="false" aria-controls="pane-filters">Filters<span class="dot" id="filter-dot" hidden></span></button>
+      <button class="tab" id="tab-key" role="tab" aria-selected="false" aria-controls="pane-key">Map key</button>
+    </div>
+
+    <section class="pane" id="pane-list" role="tabpanel" aria-labelledby="tab-list">
+      <div class="paneTop">
       <div class="row"><label for="miles">Max distance</label><input id="miles" type="range" min="2" max="25" step="1" value="25"><output id="miles-out">25 mi</output></div>
-      <details class="grp" id="grp-filter">
-        <summary>Filters<span class="state" id="st-filter"></span></summary>
+        <div id="listhead"><div id="listtitle">Top coordination opportunities</div><span id="listcount"></span></div>
+      </div>
+    <div id="listwrap"><div id="list"></div></div>
+    </section>
+
+    <section class="pane" id="pane-filters" role="tabpanel" aria-labelledby="tab-filters" hidden>
+
         <div class="row"><label for="gap">Time gap</label>
           <select id="gap"><option value="99999">any</option><option value="365">within 1 year</option><option value="730">within 2 years</option><option value="1825">within 5 years</option></select></div>
         <div class="row"><label for="conf">Location quality</label>
           <select id="conf"><option value="1">any</option><option value="2">medium or better</option><option value="3">high only</option></select></div>
-      </details>
-      <details class="grp" id="grp-display">
-        <summary>Map display<span class="state" id="st-display"></span></summary>
+
+        <div class="subhead">Map display</div>
         <label class="chk"><input id="showall" type="checkbox" checked> Projects with no overlap</label>
         <label class="chk"><input id="group" type="checkbox" checked> Merge duplicate corridors</label>
         <label class="chk"><input id="radii" type="checkbox"> All Dominion circles</label>
         <label class="chk"><input id="radiiG" type="checkbox"> All Georgia Power circles</label>
         <label class="chk"><input id="partners" type="checkbox"> Georgia ITS partners</label>
-      </details>
+
     </section>
-    <div id="listhead"><div id="listtitle">Top coordination opportunities</div><span id="listcount"></span></div>
-    <div id="listwrap"><div id="list"></div></div>
-    <details id="mapkey">
-      <summary>Map key &amp; how to read it</summary>
+
+    <section class="pane" id="pane-key" role="tabpanel" aria-labelledby="tab-key" hidden>
       <div class="legend">
         <div style="flex-basis:100%">
           <svg viewBox="0 0 380 78" style="display:block;width:100%;max-width:380px" role="img" aria-label="Key: two substations joined by a line make one project; a project with one location is a single shape with no line">
@@ -319,7 +323,7 @@
         <li><b>Red glow</b> means the project takes part in an overlap.</li>
         <li><b>Dotted</b> means a low-confidence location.</li>
       </ul>
-    </details>
+    </section>
   </aside>
   <main id="mapwrap">
     <div id="map" aria-label="Map of planned projects"></div>
@@ -502,7 +506,9 @@ function render() {
   document.getElementById('k-desc').textContent = nD;
   document.getElementById('k-gpc').textContent = nG;
   document.getElementById('k-ovl').textContent = opps.length;
-  document.getElementById('k-pct').textContent = nD ? Math.round(100 * dOv.size / nD) + '%' : '-';
+  const pct = nD ? Math.round(100 * dOv.size / nD) + '%' : '-';
+  document.getElementById('k-pct').textContent = pct;
+  document.getElementById('k-pct2').textContent = pct;
   renderList();
   const so = selected && visible.find(o => o.id === selected);
   if (so) { drawSelection(so, false); renderDetail(so, byId[so.a], byId[so.b]); }      // keep the selection when a filter changes
@@ -882,6 +888,17 @@ map.on('mousemove', e => {
 map.on('mouseout', clearHover);
 
 if (!DATA.partners.length) document.getElementById('partners').closest('label').style.display = 'none';
+// ---- side panel tabs ----------------------------------------------------
+const TABS = [['tab-list', 'pane-list'], ['tab-filters', 'pane-filters'], ['tab-key', 'pane-key']];
+TABS.forEach(([t, p]) => document.getElementById(t).addEventListener('click', () => {
+  TABS.forEach(([t2, p2]) => {
+    const on = t2 === t;
+    document.getElementById(t2).setAttribute('aria-selected', String(on));
+    document.getElementById(p2).hidden = !on;
+  });
+  if (p === 'pane-list') map.invalidateSize();
+}));
+
 // A collapsed group should still say what it is doing, otherwise hiding the
 // controls just hides the state of the map.
 const BOX_DEFAULTS = {showall: true, group: true, radii: false, radiiG: false, partners: false};
@@ -889,12 +906,14 @@ function syncGroupState() {
   const gap = document.getElementById('gap'), conf = document.getElementById('conf');
   const g = gap.options[gap.selectedIndex].text, c = conf.options[conf.selectedIndex].text;
   const set = [g, c].filter(t => t !== 'any');
-  document.getElementById('st-filter').textContent = set.length ? set.join(' \u00b7 ') : 'none';
-  const changed = Object.keys(BOX_DEFAULTS).filter(id => {
+  document.getElementById('filter-dot').hidden = !(set.length || changedBoxes());
+}
+
+function changedBoxes() {
+  return Object.keys(BOX_DEFAULTS).filter(id => {
     const b = document.getElementById(id);
-    return b && b.offsetParent !== null && b.checked !== BOX_DEFAULTS[id];
+    return b && b.checked !== BOX_DEFAULTS[id];
   }).length;
-  document.getElementById('st-display').textContent = changed ? changed + ' changed' : 'default';
 }
 
 // ---- light / dark -------------------------------------------------------

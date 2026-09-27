@@ -257,21 +257,29 @@ try {
   out.count_default = el('listcount').textContent.trim();
   out.paths = document.querySelectorAll('path').length;
 
-  // The controls are two disclosure groups now, so the collapsed summaries have
-  // to state what is set or hiding them hides the state of the map.
-  out.ctl_groups = document.querySelectorAll('.controls .grp').length;
-  out.ctl_closed_by_default = !el('grp-filter').open && !el('grp-display').open;
-  out.ctl_slider_stays_visible = el('miles').offsetParent !== null;
-  out.ctl_state_default = [el('st-filter').textContent, el('st-display').textContent];
+  // The panel is three tabs: the ranked list, the filters and the map key.
+  out.tab_count = document.querySelectorAll('.tabs .tab').length;
+  out.tab_list_default = !el('pane-list').hidden
+                      && el('pane-filters').hidden && el('pane-key').hidden;
+  out.tab_slider_with_list = el('pane-list').contains(el('miles'));
+  out.tab_list_top = Math.round(el('listhead').getBoundingClientRect().top);
+  out.tab_cards_in_view = [...document.querySelectorAll('.card')]
+    .filter(c => c.getBoundingClientRect().bottom <= window.innerHeight).length;
+  out.tab_dot_at_rest = el('filter-dot').hidden;
+  el('tab-filters').click();
+  out.tab_filters_shown = !el('pane-filters').hidden && el('pane-list').hidden;
+  out.tab_filters_complete = ['gap', 'conf', 'showall', 'group', 'radii', 'radiiG', 'partners']
+    .every(i => el('pane-filters').contains(el(i)));
   el('gap').value = '365'; fire(el('gap'));
-  el('radii').checked = true; fire(el('radii'));
-  out.ctl_state_changed = [el('st-filter').textContent, el('st-display').textContent];
+  out.tab_dot_when_set = !el('filter-dot').hidden;
   el('gap').value = '99999'; fire(el('gap'));
-  el('radii').checked = false; fire(el('radii'));
-  out.ctl_state_restored = [el('st-filter').textContent, el('st-display').textContent];
-  el('grp-display').open = true;
-  out.ctl_boxes_reachable = el('grp-display').querySelectorAll('input').length;
-  el('grp-display').open = false;
+  out.tab_dot_cleared = el('filter-dot').hidden;
+  el('tab-key').click();
+  out.tab_key_shown = !el('pane-key').hidden;
+  out.tab_key_rows = document.querySelectorAll('#pane-key .legend span').length;
+  out.tab_key_bullets = document.querySelectorAll('#pane-key .howto li').length;
+  el('tab-list').click();
+  out.tab_back_to_list = !el('pane-list').hidden;
   // the rank chip inverts the surface; a literal white text colour made it
   // vanish in dark mode
   const chipLuma = () => { const c = getComputedStyle(document.querySelector('.rank'));
@@ -297,7 +305,7 @@ try {
     luma(c) < luma(out.theme_light_surfaces[i]) - 40);
   out.theme_ink_lightened = luma(cs(document.body).color) > luma(out.theme_light_ink) + 40;
   // the legend diagram used to bake in black ink and a white surface
-  const legendSvg = document.querySelector('#mapkey svg text');
+  const legendSvg = document.querySelector('#pane-key svg text');
   out.theme_legend_follows = legendSvg ? luma(cs(legendSvg).fill) > 120 : null;
   out.theme_hues_restepped = cs(root0()).getPropertyValue('--desc').trim();
   el('themebtn').click();
@@ -313,29 +321,8 @@ try {
   out.type_id_is_mono = idEl ? /mono/i.test(getComputedStyle(idEl).fontFamily) : null;
   out.type_tabular = getComputedStyle(document.body).fontVariantNumeric;
 
-  // The ranked list must be reachable without scrolling past the map key.
-  const topOf = sel => Math.round(document.querySelector(sel).getBoundingClientRect().top);
-  out.side_list_top = topOf('#listhead');
-  out.side_key_top = topOf('#mapkey');
-  out.side_list_above_key = topOf('#listhead') < topOf('#mapkey');
-  out.side_key_collapsed = !el('mapkey').open;
-  out.side_cards_in_view = [...document.querySelectorAll('.card')]
-    .filter(c => c.getBoundingClientRect().bottom <= window.innerHeight).length;
-  el('mapkey').open = true;
-  out.side_key_expands = !!document.querySelector('#mapkey .legend');
-  // Opened, the panel scrolls internally. The summary has to stay put or there
-  // is no visible way to close it again.
-  const sum = document.querySelector('#mapkey > summary');
-  out.key_summary_sticky = getComputedStyle(sum).position === 'sticky';
-  el('mapkey').scrollTop = el('mapkey').scrollHeight;
-  const sr = sum.getBoundingClientRect(), kr = el('mapkey').getBoundingClientRect();
-  out.key_summary_visible_when_scrolled = sr.top >= kr.top - 1 && sr.bottom <= kr.bottom + 1;
-  out.key_howto_bullets = document.querySelectorAll('#mapkey .howto li').length;
-  out.key_no_wall_of_text = !el('mapkey').textContent
+  out.key_no_wall_of_text = !document.getElementById('pane-key').textContent
     .includes('a project with only one location found has no line and is a single');
-  sum.click();
-  out.key_collapses_on_click = !el('mapkey').open;
-  el('mapkey').open = false;
 
   const g = el('group');
   out.top_merged_cards = cards();
@@ -577,21 +564,30 @@ def test_map():
     check("opportunity list is populated", r["cards_default"] == 7, r["cards_default"])
     check("list header reports the de-duplication",
           "from 55 pairs" in r["count_default"], r["count_default"])
-    # The ranked list is the deliverable, so it must be visible in the sidebar
-    # without scrolling past the map key, which is long and read once.
-    check("the controls collapse into two groups",
-          r.get("ctl_groups") == 2 and r.get("ctl_closed_by_default"),
-          r.get("ctl_groups"))
-    check("the distance slider stays visible", r.get("ctl_slider_stays_visible"))
-    check("collapsed groups report their state",
-          r.get("ctl_state_default") == ["none", "default"], r.get("ctl_state_default"))
-    check("the state updates when a control changes",
-          r.get("ctl_state_changed") == ["within 1 year", "1 changed"],
-          r.get("ctl_state_changed"))
-    check("and returns to default when undone",
-          r.get("ctl_state_restored") == ["none", "default"], r.get("ctl_state_restored"))
-    check("every checkbox is still reachable inside its group",
-          r.get("ctl_boxes_reachable") == 5, r.get("ctl_boxes_reachable"))
+    # The panel is three tabs. The ranked list is the deliverable, so it is the
+    # tab on load and gets the height; filters and the key are peers.
+    check("the panel is three tabs", r.get("tab_count") == 3, r.get("tab_count"))
+    check("the ranked list is the tab shown on load", r.get("tab_list_default"))
+    check("the distance slider sits with the list it filters",
+          r.get("tab_slider_with_list"))
+    check("the list starts in the upper half of the panel",
+          r.get("tab_list_top", 999) < 360, r.get("tab_list_top"))
+    check("more than one ranked card is visible without scrolling",
+          r.get("tab_cards_in_view", 0) >= 2, r.get("tab_cards_in_view"))
+    check("the Filters tab holds every control",
+          r.get("tab_filters_shown") and r.get("tab_filters_complete"))
+    check("a set filter is flagged on the tab, and cleared again",
+          r.get("tab_dot_at_rest") and r.get("tab_dot_when_set")
+          and r.get("tab_dot_cleared"),
+          (r.get("tab_dot_at_rest"), r.get("tab_dot_when_set"), r.get("tab_dot_cleared")))
+    check("the Map key tab holds the symbols and the how-to",
+          r.get("tab_key_shown") and r.get("tab_key_rows", 0) >= 7
+          and r.get("tab_key_bullets", 0) >= 5,
+          (r.get("tab_key_rows"), r.get("tab_key_bullets")))
+    check("switching back returns to the list", r.get("tab_back_to_list"))
+    check("the how-to is a list, not one long paragraph",
+          r.get("tab_key_bullets", 0) >= 5 and r.get("key_no_wall_of_text"),
+          r.get("tab_key_bullets"))
     check("the rank chip stays legible in both themes",
           r.get("chip_contrast_light", 0) > 80 and r.get("chip_contrast_dark", 0) > 80,
           (r.get("chip_contrast_light"), r.get("chip_contrast_dark")))
@@ -616,19 +612,6 @@ def test_map():
           r.get("type_has_fallback"), r.get("type_body_stack"))
     check("figures are tabular so columns line up",
           "tabular-nums" in (r.get("type_tabular") or ""), r.get("type_tabular"))
-
-    check("the ranked list sits above the map key", r.get("side_list_above_key"),
-          (r.get("side_list_top"), r.get("side_key_top")))
-    check("the map key is folded away by default", r.get("side_key_collapsed"))
-    check("the map key still expands", r.get("side_key_expands"))
-    check("its header stays put when the panel is scrolled",
-          r.get("key_summary_sticky") and r.get("key_summary_visible_when_scrolled"))
-    check("clicking the header collapses it again", r.get("key_collapses_on_click"))
-    check("the how-to is a list, not one long paragraph",
-          r.get("key_howto_bullets", 0) >= 5 and r.get("key_no_wall_of_text"),
-          r.get("key_howto_bullets"))
-    check("at least one ranked card is visible without scrolling",
-          r.get("side_cards_in_view", 0) >= 1, r.get("side_cards_in_view"))
 
     # The deliverable is a ranked top ten. With duplicates merged there are only
     # seven distinct opportunities, so the cap only bites on the raw pair list.
