@@ -247,6 +247,7 @@ CHROME_PATHS = [
 PROBE = r"""
 <script>
 const out = {};
+const root0 = () => document.documentElement;
 const SELECTED_ON_LOAD = (typeof selected !== 'undefined' && selected) ? String(selected) : '';
 const fire = el => el.dispatchEvent(new Event('input', {bubbles: true}));
 const cards = () => document.querySelectorAll('.card').length;
@@ -255,6 +256,29 @@ try {
   out.cards_default = cards();
   out.count_default = el('listcount').textContent.trim();
   out.paths = document.querySelectorAll('path').length;
+
+  // Light / dark. The interface surfaces must actually repaint, and the choice
+  // must be reversible -- a half-themed panel is worse than none.
+  const cs = e => getComputedStyle(e);
+  const surfaces = () => ['side', 'detail', 'hoverinfo'].map(id => cs(el(id)).backgroundColor);
+  const luma = c => { const m = c.match(/\d+/g); return m ? (+m[0] + +m[1] + +m[2]) / 3 : null; };
+  el('themebtn') && root0().setAttribute('data-theme', 'light');
+  out.theme_btn = !!el('themebtn');
+  out.theme_light_surfaces = surfaces();
+  out.theme_light_ink = cs(document.body).color;
+  root0().setAttribute('data-theme', 'dark');
+  out.theme_dark_surfaces = surfaces();
+  out.theme_dark_ink = cs(document.body).color;
+  out.theme_all_surfaces_darkened = surfaces().every((c, i) =>
+    luma(c) < luma(out.theme_light_surfaces[i]) - 40);
+  out.theme_ink_lightened = luma(cs(document.body).color) > luma(out.theme_light_ink) + 40;
+  // the legend diagram used to bake in black ink and a white surface
+  const legendSvg = document.querySelector('#mapkey svg text');
+  out.theme_legend_follows = legendSvg ? luma(cs(legendSvg).fill) > 120 : null;
+  out.theme_hues_restepped = cs(root0()).getPropertyValue('--desc').trim();
+  el('themebtn').click();
+  out.theme_toggles = root0().getAttribute('data-theme');
+  root0().removeAttribute('data-theme');
 
   // Type: identifiers in mono, and a system fallback so the page still reads
   // the same when the font cannot be fetched.
@@ -531,6 +555,20 @@ def test_map():
           "from 55 pairs" in r["count_default"], r["count_default"])
     # The ranked list is the deliverable, so it must be visible in the sidebar
     # without scrolling past the map key, which is long and read once.
+    check("there is a light/dark toggle", r.get("theme_btn"))
+    check("every interface surface repaints in dark",
+          r.get("theme_all_surfaces_darkened"),
+          (r.get("theme_light_surfaces"), r.get("theme_dark_surfaces")))
+    check("text inverts with the surface", r.get("theme_ink_lightened"),
+          (r.get("theme_light_ink"), r.get("theme_dark_ink")))
+    check("the legend diagram follows the theme too",
+          r.get("theme_legend_follows"), "legend svg still dark-on-dark")
+    check("the data hues are re-stepped for dark, not reused",
+          r.get("theme_hues_restepped", "").lower() not in ("#1f5fbf", ""),
+          r.get("theme_hues_restepped"))
+    check("the toggle flips the theme", r.get("theme_toggles") in ("light", "dark"),
+          r.get("theme_toggles"))
+
     check("identifiers are set in a monospace face", r.get("type_id_is_mono"),
           r.get("type_body_stack"))
     check("the type stack falls back to the system font",

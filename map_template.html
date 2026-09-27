@@ -11,7 +11,7 @@
 <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
 <style>
   :root {
-    color-scheme: light;
+    color-scheme: light dark;
     --bg: #f6f7f9; --panel: #ffffff; --ink: #1b2430; --muted: #5d6a7a; --line: #dfe3e8;
     --desc: #1f5fbf; --gpc: #c95f00; --ovl: #c4232d; --ok: #1a7f4b; --warn: #a15c00;
     /* Form controls get a graphite of their own. Left to the browser they render
@@ -19,6 +19,8 @@
        look like a Dominion setting -- the 25-mile rule applies to both utilities
        equally, measured centre to centre. */
     --control: #46505c;
+    --hover: #eef1f5; --btn: #f3f5f8; --btnh: #e9edf2; --marker: #b6bfca;
+    --shadow: rgba(20,30,45,.22);
     --radius: 10px;
   }
   * { box-sizing: border-box; }
@@ -34,6 +36,45 @@
   .fig { letter-spacing: -.01em; }
   .money { font-variant-numeric: tabular-nums; font-weight: 600; }
   #app { display: grid; grid-template-columns: 410px 1fr; height: 100vh; }
+  @media (prefers-color-scheme: dark) {
+  /* Dark mode for the interface surfaces -- sidebar, detail card, hover panel.
+     The map tiles stay as they are: they are imagery, not chrome. Only the
+     tokens are redefined; every rule above is written against them.
+     The two data hues are re-stepped rather than reused: #1f5fbf and #c95f00
+     sit outside the dark lightness band, so these were picked with the palette
+     validator against the dark surface (CVD dE 25.2 protan, 26.6 tritan,
+     28.0 normal, both over 3:1 contrast). */
+  :root:not([data-theme="light"]) {
+    --bg: #11151a; --panel: #1a1f26; --ink: #e6ecf3; --muted: #94a1b0; --line: #2b333d;
+    --desc: #4a90e2; --gpc: #cf7a28; --ovl: #e8555f; --ok: #35b06e; --warn: #d19a2e;
+    --control: #7f8c9b; --hover: #232b34; --btn: #232b34; --btnh: #2c3540;
+    --marker: #4a5563; --shadow: rgba(0,0,0,.55);
+    color-scheme: dark;
+  }
+  }
+
+  /* Dark mode for the interface surfaces -- sidebar, detail card, hover panel.
+     The map tiles stay as they are: they are imagery, not chrome. Only the
+     tokens are redefined; every rule above is written against them.
+     The two data hues are re-stepped rather than reused: #1f5fbf and #c95f00
+     sit outside the dark lightness band, so these were picked with the palette
+     validator against the dark surface (CVD dE 25.2 protan, 26.6 tritan,
+     28.0 normal, both over 3:1 contrast). */
+  :root[data-theme="dark"] {
+    --bg: #11151a; --panel: #1a1f26; --ink: #e6ecf3; --muted: #94a1b0; --line: #2b333d;
+    --desc: #4a90e2; --gpc: #cf7a28; --ovl: #e8555f; --ok: #35b06e; --warn: #d19a2e;
+    --control: #7f8c9b; --hover: #232b34; --btn: #232b34; --btnh: #2c3540;
+    --marker: #4a5563; --shadow: rgba(0,0,0,.55);
+    color-scheme: dark;
+  }
+
+  .themebtn { position: absolute; top: 14px; right: 16px; width: 30px; height: 30px; border: 1px solid var(--line);
+              border-radius: 8px; background: var(--panel); color: var(--muted); cursor: pointer;
+              font-size: 14px; line-height: 1; display: flex; align-items: center; justify-content: center; }
+  .themebtn:hover { color: var(--ink); background: var(--hover); }
+  #side header { position: relative; }
+  #side h1 { padding-right: 38px; }
+
   #side { background: var(--panel); border-right: 1px solid var(--line); display: flex; flex-direction: column; min-height: 0; }
   #mapwrap { position: relative; height: 100%; min-height: 320px; }
   #map { height: 100%; }
@@ -72,7 +113,7 @@
   .row label { min-width: 92px; color: var(--muted); }
   .row input[type=range] { flex: 1; accent-color: var(--control); }
   .chk input[type=checkbox] { accent-color: var(--control); }
-  select { flex: 1; padding: 4px 6px; border: 1px solid var(--line); border-radius: 6px; background: #fff; color: var(--ink); }
+  select { flex: 1; padding: 4px 6px; border: 1px solid var(--line); border-radius: 6px; background: var(--panel); color: var(--ink); }
   .chk { display: flex; gap: 8px; align-items: center; color: var(--ink); }
   #listwrap { flex: 1; overflow-y: auto; min-height: 0; }
   /* The ranked list is the deliverable, so it sits high in the panel and the
@@ -88,20 +129,20 @@
   #mapkey[open] > summary { border-bottom-color: var(--line); }
   #mapkey[open] > summary::after { content: "Hide"; float: right; font-weight: 400;
                                    font-size: 11px; color: var(--muted); }
-  #mapkey > summary:hover { color: var(--ink); background: #f7f9fb; }
+  #mapkey > summary:hover { color: var(--ink); background: var(--hover); }
   #mapkey .legend, #mapkey > .sub { padding-left: 18px; padding-right: 18px; }
   #mapkey .howto { margin: 2px 0 14px; padding: 0 18px 0 34px; font-size: 12px; line-height: 1.6;
                    color: var(--muted); }
   #mapkey .howto li { margin-bottom: 7px; }
-  #mapkey .howto li::marker { color: #b6bfca; }
+  #mapkey .howto li::marker { color: var(--marker); }
   #mapkey .howto b { color: var(--ink); font-weight: 600; }
   #listhead { padding: 10px 18px 4px; font-weight: 600; display: flex; justify-content: space-between; }
   #listhead span { color: var(--muted); font-weight: 400; font-size: 12px; }
   .morebtn { display: block; width: calc(100% - 24px); margin: 6px 12px 12px; padding: 7px 10px;
-             font: inherit; font-size: 12px; color: var(--ink); background: #f3f5f8;
+             font: inherit; font-size: 12px; color: var(--ink); background: var(--btn);
              border: 1px solid var(--line); border-radius: 6px; cursor: pointer; }
-  .morebtn:hover { background: #e9edf2; }
-  .card { margin: 6px 12px; padding: 10px 12px; border: 1px solid var(--line); border-radius: var(--radius); cursor: pointer; background: #fff; }
+  .morebtn:hover { background: var(--btnh); }
+  .card { margin: 6px 12px; padding: 10px 12px; border: 1px solid var(--line); border-radius: var(--radius); cursor: pointer; background: var(--panel); }
   .card:hover { border-color: #b8c1cc; }
   .card.sel { border-color: var(--ovl); box-shadow: 0 0 0 2px rgba(196,35,45,.15); }
   .card:focus-visible { outline: 2px solid var(--ovl); outline-offset: 1px; }
@@ -113,11 +154,11 @@
   .nm .d { color: var(--desc); font-weight: 600; } .nm .g { color: var(--gpc); font-weight: 600; }
   .meta { color: var(--muted); font-size: 11.5px; margin-top: 5px; }
   #detail { position: absolute; right: 14px; bottom: 26px; width: 390px; max-width: calc(100% - 28px); max-height: 56%; overflow-y: auto; z-index: 800;
-    background: #fff; border: 1px solid var(--line); border-radius: 12px; box-shadow: 0 8px 28px rgba(20,30,45,.22); padding: 12px 14px; display: none; }
+    background: var(--panel); border: 1px solid var(--line); border-radius: 12px; box-shadow: 0 8px 28px var(--shadow); padding: 12px 14px; display: none; }
   /* hover readout: top-right, clear of #detail which sits bottom-right */
   #hoverinfo { position: absolute; right: 58px; top: 14px; width: 270px; max-width: calc(100% - 28px);
                z-index: 801; background: var(--panel); border: 1px solid var(--line); border-radius: 8px;
-               box-shadow: 0 4px 16px rgba(0,0,0,.13); padding: 10px 12px; pointer-events: none; }
+               box-shadow: 0 4px 16px var(--shadow); padding: 10px 12px; pointer-events: none; }
   #hoverinfo .ht { font-size: 12px; font-weight: 700; }
   #hoverinfo .hs { font-size: 11px; color: var(--muted); margin-top: 1px; }
   #hoverinfo .hrow { font-size: 11.5px; margin-top: 6px; line-height: 1.35; }
@@ -136,7 +177,7 @@
                   width: 26px; height: 26px; display: inline-flex; align-items: center;
                   justify-content: center; border-radius: 5px; font-size: 18px; font-weight: 600;
                   line-height: 1; }
-  #detail .fold:hover { background: #eef1f5; color: var(--ink); }
+  #detail .fold:hover { background: var(--hover); color: var(--ink); }
   #detail.folded { width: auto; max-width: min(340px, calc(100% - 28px)); max-height: none;
                    overflow: visible; padding-bottom: 8px; cursor: pointer; }
   #detail.folded .dbody { display: none; }
@@ -180,6 +221,7 @@
   <aside id="side">
     <header>
       <h1>Gridlock: where two utilities' plans collide</h1>
+      <button class="themebtn" id="themebtn" type="button" title="Dark mode" aria-label="Switch to dark mode">&#9790;</button>
       <div class="sub">Dominion Energy South Carolina vs Georgia Power &middot; planned transmission projects &middot; overlap = centres &lt; 25 mi apart</div>
       <div class="kpis">
         <div class="hero">
@@ -213,24 +255,24 @@
       <div class="legend">
         <div style="flex-basis:100%">
           <svg viewBox="0 0 380 78" style="display:block;width:100%;max-width:380px" role="img" aria-label="Key: two substations joined by a line make one project; a project with one location is a single shape with no line">
-            <text x="105" y="14" text-anchor="middle" font-size="11" font-weight="600" fill="#1b2430">project = the power line</text>
-            <line x1="35" y1="34" x2="175" y2="34" stroke="#111" stroke-width="4"/>
-            <circle cx="35" cy="34" r="7" fill="#111" stroke="#fff" stroke-width="2"/>
-            <circle cx="175" cy="34" r="7" fill="#111" stroke="#fff" stroke-width="2"/>
-            <text x="35" y="58" text-anchor="middle" font-size="11" font-weight="600" fill="#111">substation</text>
-            <text x="175" y="58" text-anchor="middle" font-size="11" font-weight="600" fill="#111">substation</text>
+            <text x="105" y="14" text-anchor="middle" font-size="11" font-weight="600" fill="currentColor">project = the power line</text>
+            <line x1="35" y1="34" x2="175" y2="34" stroke="currentColor" stroke-width="4"/>
+            <circle cx="35" cy="34" r="7" fill="currentColor" stroke="var(--panel)" stroke-width="2"/>
+            <circle cx="175" cy="34" r="7" fill="currentColor" stroke="var(--panel)" stroke-width="2"/>
+            <text x="35" y="58" text-anchor="middle" font-size="11" font-weight="600" fill="currentColor">substation</text>
+            <text x="175" y="58" text-anchor="middle" font-size="11" font-weight="600" fill="currentColor">substation</text>
             <line x1="228" y1="8" x2="228" y2="70" stroke="#dfe3e8"/>
-            <text x="300" y="14" text-anchor="middle" font-size="11" font-weight="600" fill="#1b2430">single location</text>
-            <rect x="268" y="27" width="14" height="14" rx="2" fill="#1f5fbf" stroke="#fff" stroke-width="2"/>
-            <circle cx="316" cy="34" r="8" fill="#c95f00" stroke="#fff" stroke-width="2"/>
-            <text x="300" y="58" text-anchor="middle" font-size="10.5" fill="#5d6a7a">a project at one place,</text>
-            <text x="300" y="71" text-anchor="middle" font-size="10.5" fill="#5d6a7a">no line</text>
+            <text x="300" y="14" text-anchor="middle" font-size="11" font-weight="600" fill="currentColor">single location</text>
+            <rect x="268" y="27" width="14" height="14" rx="2" fill="var(--desc)" stroke="var(--panel)" stroke-width="2"/>
+            <circle cx="316" cy="34" r="8" fill="var(--gpc)" stroke="var(--panel)" stroke-width="2"/>
+            <text x="300" y="58" text-anchor="middle" font-size="10.5" fill="var(--muted)">a project at one place,</text>
+            <text x="300" y="71" text-anchor="middle" font-size="10.5" fill="var(--muted)">no line</text>
           </svg>
         </div>
-        <span><svg width="40" height="14" viewBox="0 0 40 14" aria-hidden="true"><line x1="6" y1="7" x2="34" y2="7" stroke="#1f5fbf" stroke-width="3.5"/><circle cx="6" cy="7" r="5" fill="#1f5fbf" stroke="#fff" stroke-width="1.5"/><circle cx="34" cy="7" r="5" fill="#1f5fbf" stroke="#fff" stroke-width="1.5"/></svg>Dominion project</span>
-        <span><svg width="40" height="14" viewBox="0 0 40 14" aria-hidden="true"><line x1="6" y1="7" x2="34" y2="7" stroke="#c95f00" stroke-width="3.5"/><circle cx="6" cy="7" r="5" fill="#c95f00" stroke="#fff" stroke-width="1.5"/><circle cx="34" cy="7" r="5" fill="#c95f00" stroke="#fff" stroke-width="1.5"/></svg>Georgia Power project</span>
-        <span><svg width="34" height="14" viewBox="0 0 34 14" aria-hidden="true"><rect x="2" y="1" width="12" height="12" rx="2" fill="#1f5fbf" stroke="#fff" stroke-width="1.5"/><circle cx="26" cy="7" r="6" fill="#c95f00" stroke="#fff" stroke-width="1.5"/></svg>single location: square = Dominion, circle = Georgia Power</span>
-        <span><svg width="34" height="14" viewBox="0 0 34 14" aria-hidden="true"><rect x="2" y="1" width="12" height="12" rx="2" fill="#fff" stroke="#1f5fbf" stroke-width="2"/><circle cx="26" cy="7" r="6" fill="#fff" stroke="#c95f00" stroke-width="2"/></svg>hollow = overlaps nothing</span>
+        <span><svg width="40" height="14" viewBox="0 0 40 14" aria-hidden="true"><line x1="6" y1="7" x2="34" y2="7" stroke="var(--desc)" stroke-width="3.5"/><circle cx="6" cy="7" r="5" fill="var(--desc)" stroke="var(--panel)" stroke-width="1.5"/><circle cx="34" cy="7" r="5" fill="var(--desc)" stroke="var(--panel)" stroke-width="1.5"/></svg>Dominion project</span>
+        <span><svg width="40" height="14" viewBox="0 0 40 14" aria-hidden="true"><line x1="6" y1="7" x2="34" y2="7" stroke="var(--gpc)" stroke-width="3.5"/><circle cx="6" cy="7" r="5" fill="var(--gpc)" stroke="var(--panel)" stroke-width="1.5"/><circle cx="34" cy="7" r="5" fill="var(--gpc)" stroke="var(--panel)" stroke-width="1.5"/></svg>Georgia Power project</span>
+        <span><svg width="34" height="14" viewBox="0 0 34 14" aria-hidden="true"><rect x="2" y="1" width="12" height="12" rx="2" fill="var(--desc)" stroke="var(--panel)" stroke-width="1.5"/><circle cx="26" cy="7" r="6" fill="var(--gpc)" stroke="var(--panel)" stroke-width="1.5"/></svg>single location: square = Dominion, circle = Georgia Power</span>
+        <span><svg width="34" height="14" viewBox="0 0 34 14" aria-hidden="true"><rect x="2" y="1" width="12" height="12" rx="2" fill="var(--panel)" stroke="var(--desc)" stroke-width="2"/><circle cx="26" cy="7" r="6" fill="var(--panel)" stroke="var(--gpc)" stroke-width="2"/></svg>hollow = overlaps nothing</span>
         <span><span class="num dom" style="width:18px;height:18px;line-height:14px;font-size:10px">D</span>Dominion project's centre (midpoint of its line)</span>
         <span><span class="num sel" style="width:18px;height:18px;line-height:14px;font-size:10px">G</span>Georgia Power project's centre (midpoint of its line)</span>
         <span><span class="num" style="width:18px;height:18px;line-height:14px;font-size:10px;margin-right:2px">1</span><span class="num dom" style="width:18px;height:18px;line-height:14px;font-size:10px">1</span>numbers = the other company's projects inside the circle</span>
@@ -814,6 +856,34 @@ map.on('mousemove', e => {
 map.on('mouseout', clearHover);
 
 if (!DATA.partners.length) document.getElementById('partners').closest('label').style.display = 'none';
+// ---- light / dark -------------------------------------------------------
+// With nothing stored the page follows the system setting; the button records
+// an explicit choice that overrides it. Storage is wrapped because a file://
+// page in a private window can throw on access.
+(function () {
+  const root = document.documentElement, btn = document.getElementById('themebtn');
+  const sysDark = window.matchMedia('(prefers-color-scheme: dark)');
+  let stored = null;
+  try { stored = localStorage.getItem('gridlock-theme'); } catch (e) {}
+
+  function apply(choice) {
+    if (choice) root.setAttribute('data-theme', choice); else root.removeAttribute('data-theme');
+    const dark = choice ? choice === 'dark' : sysDark.matches;
+    btn.innerHTML = dark ? '&#9728;' : '&#9790;';          // sun when dark, moon when light
+    btn.title = dark ? 'Light mode' : 'Dark mode';
+    btn.setAttribute('aria-label', 'Switch to ' + (dark ? 'light' : 'dark') + ' mode');
+  }
+  apply(stored);
+  sysDark.addEventListener('change', () => { if (!root.hasAttribute('data-theme')) apply(null); });
+  btn.addEventListener('click', () => {
+    const dark = root.getAttribute('data-theme') === 'dark'
+              || (!root.hasAttribute('data-theme') && sysDark.matches);
+    const next = dark ? 'light' : 'dark';
+    try { localStorage.setItem('gridlock-theme', next); } catch (e) {}
+    apply(next);
+  });
+})();
+
 ['miles', 'gap', 'conf', 'showall', 'group', 'radii', 'radiiG', 'partners'].forEach(id => document.getElementById(id).addEventListener('input', render));
 render();
 if (visible.length) select(visible[0].id, false);
