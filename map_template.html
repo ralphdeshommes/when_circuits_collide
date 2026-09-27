@@ -40,10 +40,31 @@
   header { padding: 16px 18px 10px; border-bottom: 1px solid var(--line); }
   h1 { font-size: 18px; margin: 0 0 2px; letter-spacing: .2px; }
   .sub { color: var(--muted); font-size: 12.5px; }
-  .kpis { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; margin-top: 12px; }
-  .kpi { background: var(--bg); border-radius: 8px; padding: 8px 6px; text-align: center; }
-  .kpi b { display: block; font-size: 18px; line-height: 1.1; }
-  .kpi span { font-size: 10.5px; color: var(--muted); }
+  /* One finding leads: the opportunity count is the hero figure, the three
+     inputs recede beneath it. Four equal tiles gave equal weight to a headline
+     and its own inputs. Values stay in ink and a small swatch carries the
+     utility identity, so colour is never the only thing saying which is which.
+     Figures here are proportional -- tabular widths make a big number look
+     loose -- while the body keeps tabular for the columns in the lists. */
+  .kpis { margin-top: 12px; background: var(--bg); border-radius: var(--radius); padding: 13px 15px; }
+  .hero { display: flex; align-items: baseline; gap: 12px; }
+  .hero b { font-size: 48px; line-height: .95; font-weight: 600; letter-spacing: -.03em;
+            font-variant-numeric: proportional-nums; }
+  .hero .lab { font-size: 13.5px; font-weight: 600; line-height: 1.25; }
+  .hero .lab small { display: block; font-size: 11.5px; font-weight: 400; color: var(--muted);
+                     margin-top: 2px; }
+  .kpi-row { display: flex; gap: 18px; margin-top: 12px; padding-top: 11px;
+             border-top: 1px solid var(--line); }
+  /* the derived share sits on its own line rather than wrapping off the end of
+     the two counts it is derived from */
+  .kpi-note { margin-top: 7px; font-size: 11.5px; color: var(--muted); }
+  .kpi-note b { font-size: 13.5px; color: var(--ink); font-weight: 600;
+                font-variant-numeric: proportional-nums; }
+  .kpi { display: flex; align-items: baseline; gap: 5px; font-size: 11.5px; color: var(--muted); }
+  .kpi b { font-size: 16px; color: var(--ink); font-weight: 600; letter-spacing: -.01em;
+           font-variant-numeric: proportional-nums; }
+  .kpi .sw { width: 9px; height: 9px; border-radius: 2px; flex: 0 0 auto; align-self: center; }
+  .kpi .sw.d { background: var(--desc); } .kpi .sw.g { background: var(--gpc); }
   .legend { display: flex; gap: 14px; flex-wrap: wrap; margin-top: 10px; font-size: 12px; color: var(--muted); }
   .legend i { display: inline-block; width: 18px; height: 0; border-top: 4px solid; vertical-align: middle; margin-right: 5px; }
   .controls { padding: 10px 18px; border-bottom: 1px solid var(--line); display: grid; gap: 8px; font-size: 12.5px; }
@@ -149,7 +170,7 @@
     #app { grid-template-columns: 1fr; grid-template-rows: 55vh 45vh; height: auto; }
     #mapwrap { order: -1; height: 55vh; } #side { height: 45vh; }
     #detail { max-height: 70%; }
-    .kpis { grid-template-columns: repeat(2, 1fr); }
+    .hero b { font-size: 40px; }
   }
 </style>
 </head>
@@ -160,10 +181,16 @@
       <h1>Gridlock: where two utilities' plans collide</h1>
       <div class="sub">Dominion Energy South Carolina vs Georgia Power &middot; planned transmission projects &middot; overlap = centres &lt; 25 mi apart</div>
       <div class="kpis">
-        <div class="kpi"><b id="k-desc">-</b><span>Dominion projects</span></div>
-        <div class="kpi"><b id="k-gpc">-</b><span>Georgia Power</span></div>
-        <div class="kpi"><b id="k-ovl">-</b><span>opportunities</span></div>
-        <div class="kpi"><b id="k-pct">-</b><span>of Dominion projects</span></div>
+        <div class="hero">
+          <b id="k-ovl">-</b>
+          <span class="lab">coordination opportunities
+            <small>planned projects within 25 miles of each other</small></span>
+        </div>
+        <div class="kpi-row">
+          <div class="kpi"><i class="sw d"></i><b id="k-desc">-</b><span>Dominion</span></div>
+          <div class="kpi"><i class="sw g"></i><b id="k-gpc">-</b><span>Georgia Power</span></div>
+        </div>
+        <div class="kpi-note"><b id="k-pct">-</b> of Dominion projects take part in one</div>
       </div>
     </header>
     <section class="controls" aria-label="Filters">
