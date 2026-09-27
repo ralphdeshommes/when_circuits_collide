@@ -68,12 +68,28 @@
     color-scheme: dark;
   }
 
+  /* the panel folds off to the left so the map can have the whole window */
+  #app.sidehidden { grid-template-columns: 0 1fr; }
+  #app.sidehidden #side { visibility: hidden; }
+  .sidebtn { position: absolute; top: 14px; right: 52px; width: 30px; height: 30px;
+             border: 1px solid var(--line); border-radius: 8px; background: var(--panel);
+             color: var(--muted); cursor: pointer; font-size: 12px; line-height: 1;
+             display: flex; align-items: center; justify-content: center; }
+  .sidebtn:hover { color: var(--ink); background: var(--hover); }
+  .sideopen { position: absolute; left: 0; top: 50%; transform: translateY(-50%); z-index: 900;
+              width: 22px; height: 54px; border: 1px solid var(--line); border-left: 0;
+              border-radius: 0 8px 8px 0; background: var(--panel); color: var(--muted);
+              cursor: pointer; font-size: 12px; display: none; align-items: center;
+              justify-content: center; box-shadow: 2px 0 8px var(--shadow); }
+  .sideopen:hover { color: var(--ink); }
+  #app.sidehidden .sideopen { display: flex; }
+
   .themebtn { position: absolute; top: 14px; right: 16px; width: 30px; height: 30px; border: 1px solid var(--line);
               border-radius: 8px; background: var(--panel); color: var(--muted); cursor: pointer;
               font-size: 14px; line-height: 1; display: flex; align-items: center; justify-content: center; }
   .themebtn:hover { color: var(--ink); background: var(--hover); }
   #side header { position: relative; }
-  #side h1 { padding-right: 38px; }
+  #side h1 { padding-right: 76px; }
 
   #side { background: var(--panel); border-right: 1px solid var(--line); display: flex; flex-direction: column; min-height: 0; }
   #mapwrap { position: relative; height: 100%; min-height: 320px; }
@@ -161,6 +177,12 @@
   .card:hover { border-color: #b8c1cc; }
   .card.sel { border-color: var(--ovl); box-shadow: 0 0 0 2px rgba(196,35,45,.15); }
   .card:focus-visible { outline: 2px solid var(--ovl); outline-offset: 1px; }
+  /* the ranking is by score, but the card only showed distance and days, so an
+     ordered list read as unordered. The bar makes the order visible. */
+  .scorebar { display: flex; align-items: center; gap: 7px; margin-top: 6px; }
+  .scorebar i { height: 4px; border-radius: 2px; background: var(--control); flex: 0 0 auto;
+                min-width: 3px; max-width: 72%; }
+  .scorebar span { font-size: 10.5px; color: var(--muted); }
   .card .top { display: flex; justify-content: space-between; align-items: center; font-weight: 600; }
   .rank { background: var(--ink); color: var(--panel); border-radius: 6px; padding: 1px 7px; font-size: 12px; margin-right: 6px; }
   .badge { font-size: 10.5px; border-radius: 999px; padding: 1px 8px; border: 1px solid; }
@@ -236,6 +258,7 @@
   <aside id="side">
     <header>
       <h1>Gridlock: where two utilities' plans collide</h1>
+      <button class="sidebtn" id="sidebtn" type="button" title="Hide panel" aria-label="Hide the side panel" aria-expanded="true">&#10094;</button>
       <button class="themebtn" id="themebtn" type="button" title="Dark mode" aria-label="Switch to dark mode">&#9790;</button>
       <div class="sub">Dominion Energy South Carolina and Georgia Power, from their public filings</div>
       <div class="kpis">
@@ -260,6 +283,8 @@
     <section class="pane" id="pane-list" role="tabpanel" aria-labelledby="tab-list">
       <div class="paneTop">
       <div class="row"><label for="miles">Max distance</label><input id="miles" type="range" min="2" max="25" step="1" value="25"><output id="miles-out">25 mi</output></div>
+        <div class="row"><label for="sortby">Order by</label>
+          <select id="sortby"><option value="score">best match</option><option value="dist">distance</option><option value="gap">time gap</option><option value="date">soonest in service</option></select></div>
         <div id="listhead"><div id="listtitle">Top coordination opportunities</div><span id="listcount"></span></div>
       </div>
     <div id="listwrap"><div id="list"></div></div>
@@ -327,6 +352,7 @@
   </aside>
   <main id="mapwrap">
     <div id="map" aria-label="Map of planned projects"></div>
+    <button class="sideopen" id="sideopen" type="button" title="Show panel" aria-label="Show the side panel">&#10095;</button>
     <div id="hoverinfo" aria-live="polite" hidden></div>
     <section id="detail" aria-live="polite"></section>
   </main>
@@ -479,6 +505,17 @@ function render() {
   visible = filtered();
   const opps = groupOpps(visible);
   items = document.getElementById('group').checked ? opps : visible;
+  // De-duplication above must see the pairs best-first, so the user's ordering
+  // is applied afterwards, for display only.
+  const soonest = o => Math.min(new Date(byId[o.a].date), new Date(byId[o.b].date));
+  const SORTS = {
+    score: (a, b) => b.rscore - a.rscore,
+    dist:  (a, b) => a.dist - b.dist,
+    gap:   (a, b) => a.gap - b.gap,
+    // overlaps carry no dates of their own; take the earlier of the two projects'
+    date:  (a, b) => soonest(a) - soonest(b)
+  };
+  items = items.slice().sort(SORTS[document.getElementById('sortby').value] || SORTS.score);
   document.getElementById('miles-out').textContent = document.getElementById('miles').value + ' mi';
   const inOv = new Set(); visible.forEach(o => { inOv.add(o.a); inOv.add(o.b); });
   layerProjects.clearLayers(); layerOverlaps.clearLayers(); layerSel.clearLayers();
@@ -539,7 +576,8 @@ function renderList() {
                       r.others.length ? `${r.others.length} other nearby pair${r.others.length > 1 ? 's' : ''}` : ''].filter(Boolean) : [];
     return `
     <div class="card${selected === o.id ? ' sel' : ''}" role="button" tabindex="0" data-id="${esc(o.id)}">
-      <div class="top"><span><span class="rank">#${i + 1}</span><span class="fig">${o.dist.toFixed(1)} mi &middot; ${o.gap} days</span> apart</span><span class="badge ${esc(o.conf)}">${esc(o.conf)}</span></div>
+      <div class="top"><span><span class="rank">#${i + 1}</span><span class="fig">${o.dist.toFixed(1)} mi &middot; ${o.gap} days</span></span><span class="badge ${esc(o.conf)}">${esc(o.conf)}</span></div>
+      <div class="scorebar" title="70% distance, 30% schedule, adjusted for location confidence"><i style="width:${Math.round(o.rscore * 100)}%"></i><span class="fig">${o.rscore.toFixed(2)}</span></div>
       <div class="nm"><span class="d">Dominion</span> ${esc(o.nameA)}<br><span class="g">${o.sponsor === 'GPC' || o.sponsor === 'SAV' ? 'Georgia Power' : 'Georgia ' + esc(o.sponsor)}</span> ${esc(o.nameB)}</div>
       <div class="meta">${esc(o.why)}</div>
       ${bits.length ? `<div class="meta">${bits.join(' &middot; ')}</div>` : ''}
@@ -888,6 +926,20 @@ map.on('mousemove', e => {
 map.on('mouseout', clearHover);
 
 if (!DATA.partners.length) document.getElementById('partners').closest('label').style.display = 'none';
+// ---- hide the side panel -------------------------------------------------
+// Leaflet sizes itself from its container, so the map has to be told after the
+// grid column changes or it paints into the old width.
+(function () {
+  const app = document.getElementById('app');
+  const set = hidden => {
+    app.classList.toggle('sidehidden', hidden);
+    document.getElementById('sidebtn').setAttribute('aria-expanded', String(!hidden));
+    setTimeout(() => map.invalidateSize(), 220);
+  };
+  document.getElementById('sidebtn').addEventListener('click', () => set(true));
+  document.getElementById('sideopen').addEventListener('click', () => set(false));
+})();
+
 // ---- side panel tabs ----------------------------------------------------
 const TABS = [['tab-list', 'pane-list'], ['tab-filters', 'pane-filters'], ['tab-key', 'pane-key']];
 TABS.forEach(([t, p]) => document.getElementById(t).addEventListener('click', () => {
@@ -944,7 +996,7 @@ function changedBoxes() {
   });
 })();
 
-['miles', 'gap', 'conf', 'showall', 'group', 'radii', 'radiiG', 'partners'].forEach(id => document.getElementById(id).addEventListener('input', () => { syncGroupState(); render(); }));
+['miles', 'gap', 'conf', 'showall', 'group', 'radii', 'radiiG', 'partners', 'sortby'].forEach(id => document.getElementById(id).addEventListener('input', () => { syncGroupState(); render(); }));
 syncGroupState();
 render();
 if (visible.length) select(visible[0].id, false);

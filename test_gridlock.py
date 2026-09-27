@@ -257,6 +257,36 @@ try {
   out.count_default = el('listcount').textContent.trim();
   out.paths = document.querySelectorAll('path').length;
 
+  // The list is ranked by score, but the card only showed distance and days --
+  // neither monotonic -- so an ordered list read as unordered.
+  const scores = () => [...document.querySelectorAll('.card .scorebar span')]
+    .map(e => parseFloat(e.textContent));
+  // each card has two .fig elements now -- the distance line and the score --
+  // so take the first per card, not a flat selector
+  const dists = () => [...document.querySelectorAll('.card')]
+    .map(c => parseFloat(c.querySelector('.fig').textContent));
+  out.ord_scorebars = document.querySelectorAll('.card .scorebar').length;
+  out.ord_scores = scores();
+  out.ord_descending = scores().every((v, i, a) => i === 0 || a[i - 1] >= v);
+  el('sortby').value = 'dist'; fire(el('sortby'));
+  out.ord_by_distance = dists().every((v, i, a) => i === 0 || a[i - 1] <= v);
+  el('sortby').value = 'gap'; fire(el('sortby'));
+  out.ord_by_gap_ran = document.querySelectorAll('.card').length > 0;
+  el('sortby').value = 'date'; fire(el('sortby'));
+  out.ord_by_date_ran = document.querySelectorAll('.card').length > 0;
+  el('sortby').value = 'score'; fire(el('sortby'));
+  out.ord_restored = scores().every((v, i, a) => i === 0 || a[i - 1] >= v);
+
+  // the panel folds away so the map can have the window
+  out.side_map_w_open = Math.round(el('map').getBoundingClientRect().width);
+  out.side_reopen_hidden_when_open = getComputedStyle(el('sideopen')).display === 'none';
+  el('sidebtn').click();
+  out.side_hidden = el('app').classList.contains('sidehidden');
+  out.side_map_w_closed = Math.round(el('map').getBoundingClientRect().width);
+  out.side_reopen_shown = getComputedStyle(el('sideopen')).display !== 'none';
+  el('sideopen').click();
+  out.side_map_w_back = Math.round(el('map').getBoundingClientRect().width);
+
   // The panel is three tabs: the ranked list, the filters and the map key.
   out.tab_count = document.querySelectorAll('.tabs .tab').length;
   out.tab_list_default = !el('pane-list').hidden
@@ -566,6 +596,24 @@ def test_map():
           "from 55 pairs" in r["count_default"], r["count_default"])
     # The panel is three tabs. The ranked list is the deliverable, so it is the
     # tab on load and gets the height; filters and the key are peers.
+    check("every card carries its score", r.get("ord_scorebars", 0) >= 5,
+          r.get("ord_scorebars"))
+    check("the default order really is best-score-first",
+          r.get("ord_descending"), r.get("ord_scores"))
+    check("ordering by distance sorts ascending", r.get("ord_by_distance"))
+    check("ordering by time gap and by date both render",
+          r.get("ord_by_gap_ran") and r.get("ord_by_date_ran"))
+    check("switching back restores the score order", r.get("ord_restored"))
+    check("hiding the panel gives the map the full window",
+          r.get("side_hidden") and r.get("side_map_w_closed", 0)
+          > r.get("side_map_w_open", 0) + 200,
+          (r.get("side_map_w_open"), r.get("side_map_w_closed")))
+    check("the reopen tab appears only while hidden",
+          r.get("side_reopen_hidden_when_open") and r.get("side_reopen_shown"))
+    check("reopening restores the panel width",
+          r.get("side_map_w_back") == r.get("side_map_w_open"),
+          (r.get("side_map_w_back"), r.get("side_map_w_open")))
+
     check("the panel is three tabs", r.get("tab_count") == 3, r.get("tab_count"))
     check("the ranked list is the tab shown on load", r.get("tab_list_default"))
     check("the distance slider sits with the list it filters",
