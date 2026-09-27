@@ -45,17 +45,19 @@ def main(argv):
 
     print("\n== parse the two PDFs", flush=True)
     desc, gpc = parse_desc(), parse_gpc()
-    print("   %d Dominion + %d Georgia projects" % (len(desc), len(gpc)))
+    print("   %d Dominion + %d Georgia-filing projects (%s)" % (
+        len(desc), len(gpc), ", ".join(f"{u}={n}" for u, n in gpc["utility"].value_counts().items())))
     print("\n== find a location for every project", flush=True)
     geocoded = geocode.geocode_projects(desc, gpc)
     print("\n== verify matches and grade confidence", flush=True)
     projects = verify.verify_projects(geocoded)
     print(projects.groupby(["utility", "confidence"]).size().unstack(fill_value=0).to_string())
     print("\n== find overlaps, rank them, estimate value", flush=True)
-    pairs, partners, opps, projects = overlaps.compute(projects)
-    print("   %d overlapping pairs (< %d mi) -> %d distinct opportunities" % (len(pairs), overlaps.MAX_MILES, len(opps)))
+    pairs, opps, projects = overlaps.compute(projects)
+    print("   %d overlapping pairs across %d companies (< %d mi) -> %d distinct opportunities" % (
+        len(pairs), len(overlaps.companies_in(projects)), overlaps.MAX_MILES, len(opps)))
     print("\n== build the interactive map and the workbook", flush=True)
-    build_map.build_map(projects, pairs, partners)
+    build_map.build_map(projects, pairs)
     export_xlsx.export_xlsx(projects, pairs, opps)
 
     print("\nTop coordination opportunities:")

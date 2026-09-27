@@ -56,7 +56,7 @@ def run_pipeline():
     import verify
     desc, gpc = parse_desc(), parse_gpc()
     projects = verify.verify_projects(geocode.geocode_projects(desc, gpc))
-    pairs, partners, opps, projects = overlaps.compute(projects)
+    pairs, opps, projects = overlaps.compute(projects)
     return dict(desc=desc, gpc=gpc, projects=projects, pairs=pairs, opps=opps)
 
 
@@ -179,17 +179,26 @@ def test_pipeline():
 
     section("OVERLAPS")
     import overlaps as ov
-    check("every pair is closer than the 25 mi rule",
-          (pairs.distance_mi < ov.MAX_MILES).all(), float(pairs.distance_mi.max()))
-    check("pairs always join the two different utilities",
-          (pairs.utility_a.str.startswith("Dominion")
-           & ~pairs.utility_b.str.startswith("Dominion")).all())
+    check("every pair is closer than its own company-pair threshold",
+          (pairs.distance_mi < pairs.max_mi).all(), float((pairs.distance_mi - pairs.max_mi).max()))
+    check("every pair's threshold matches max_miles_for(a, b)",
+          (pairs.apply(lambda r: r.max_mi == ov.max_miles_for(r.utility_a, r.utility_b), axis=1)).all())
+    check("pairs always join two different companies",
+          (pairs.utility_a != pairs.utility_b).all())
+    check("every company pair is checked (5 companies -> up to 10 combinations)",
+          len(pairs.groupby(["utility_a", "utility_b"]).size()) >= 5,
+          len(pairs.groupby(["utility_a", "utility_b"]).size()))
     check("no project is paired with itself",
           (pairs.project_id_a != pairs.project_id_b).all())
     key = pairs.apply(lambda r: tuple(sorted((r.project_id_a, r.project_id_b))), axis=1)
     check("no duplicate pair", key.duplicated().sum() == 0, int(key.duplicated().sum()))
-    check("55 pairs", len(pairs) == 55, len(pairs))
-    check("7 de-duplicated opportunities", len(opps) == 7, len(opps))
+    check("457 pairs across all 5 companies", len(pairs) == 457, len(pairs))
+    is_dom = lambda s: s == "Dominion Energy South Carolina"
+    is_gp = lambda s: s == "Georgia Power"
+    dom_gp = pairs[(is_dom(pairs.utility_a) & is_gp(pairs.utility_b)) | (is_gp(pairs.utility_a) & is_dom(pairs.utility_b))]
+    check("Dominion x Georgia Power alone still gives the original 55 pairs (no regression from adding companies)",
+          len(dom_gp) == 55, len(dom_gp))
+    check("57 de-duplicated opportunities", len(opps) == 57, len(opps))
     check("opportunities are a subset of the pairs",
           set(opps.overlap_id) <= set(pairs.overlap_id))
 
@@ -219,9 +228,12 @@ def test_pipeline():
     check("an estimate is produced for at least one pair", len(have) > 0, len(have))
     check("low estimate never exceeds high",
           (have.est_savings_low_usd <= have.est_savings_high_usd).all())
-    # Georgia costs are redacted, so a figure can only come from the Dominion side.
+    # Georgia-side companies redact their costs, so a figure can only come from the
+    # Dominion side -- whichever side of the pair that happens to land on (alphabetical
+    # a/b order means Dominion is "b" against Dalton Utilities, "a" against everyone else).
+    dsc_costed = set(dsc[dsc.total_cost_usd.notna()].project_id)
     check("no estimate without a Dominion cost to base it on",
-          have.project_id_a.isin(dsc[dsc.total_cost_usd.notna()].project_id).all())
+          (have.project_id_a.isin(dsc_costed) | have.project_id_b.isin(dsc_costed)).all())
     check("schedule fit is a fraction", ((pairs.schedule_fit >= 0)
                                          & (pairs.schedule_fit <= 1)).all())
     far = pairs[pairs["time_gap (day)"] > 3 * 365]
@@ -293,10 +305,6 @@ try {
   ra.checked = true; fire(ra); out.paths_allradii = document.querySelectorAll('path').length;
   ra.checked = false; fire(ra);
 
-  const pa = el('partners');
-  pa.checked = true; fire(pa); out.cards_partners = cards();
-  pa.checked = false; fire(pa); out.cards_nopartners = cards();
-
   const sa = el('showall');
   sa.checked = false; fire(sa); out.paths_overlaponly = document.querySelectorAll('path').length;
   sa.checked = true; fire(sa);
@@ -304,6 +312,17 @@ try {
   document.querySelector('.card').click();
   out.detail = (document.querySelector('#detail') || document.body).textContent.slice(0, 600);
   out.selected_on_load = SELECTED_ON_LOAD;
+
+  // Only Dominion publishes a cost, and the top-ranked pair overall is no longer
+  // guaranteed to involve Dominion (GTC/MEAG/Dalton Utilities pairs can outrank it),
+  // so pick a Dominion-involving pair with an estimate before checking for a "$" figure.
+  const domPair = DATA.overlaps.find(o => o.lo != null &&
+    (byId[o.a].util.startsWith('Dominion') || byId[o.b].util.startsWith('Dominion')));
+  if (domPair) {
+    select(domPair.id, false);
+    out.dom_detail = el('detail').textContent.slice(0, 600);
+  }
+  document.querySelector('.card').click();
 
   // ---- click any project to re-centre the 25-mile circle (his feature) ----
   const gpc = DATA.projects.find(p => p.c && p.util === 'Georgia Power');
@@ -472,49 +491,50 @@ def test_map():
         return
 
     check("map renders project geometry", r["paths"] > 100, r["paths"])
-    check("opportunity list is populated", r["cards_default"] == 7, r["cards_default"])
+    # 5 companies -> 57 de-duplicated opportunities and 457 raw pairs, both well
+    # past the top-ten cap, so the default (merged) and unmerged views cap alike.
+    check("opportunity list is populated", r["cards_default"] == 10, r["cards_default"])
     check("list header reports the de-duplication",
-          "from 55 pairs" in r["count_default"], r["count_default"])
-    # The deliverable is a ranked top ten. With duplicates merged there are only
-    # seven distinct opportunities, so the cap only bites on the raw pair list.
+          "from 457 pairs" in r["count_default"], r["count_default"])
     check("the ranked list is capped at ten", r.get("cards_unmerged") == 10,
           r.get("cards_unmerged"))
     check("the heading says Top 10 when capped",
           "Top 10" in (r.get("top_title") or ""), r.get("top_title"))
     check("the count shows what is hidden",
-          "of 55" in (r.get("top_count") or ""), r.get("top_count"))
+          "of 457" in (r.get("top_count") or ""), r.get("top_count"))
     check("the list is ranked best first", r.get("top_first_rank") == "#1",
           r.get("top_first_rank"))
-    check("show-all reveals every pair", r.get("top_expanded") == 55,
+    check("show-all reveals every pair", r.get("top_expanded") == 457,
           r.get("top_expanded"))
     check("the control offers to collapse again",
           "top 10" in (r.get("top_expanded_label") or "").lower(),
           r.get("top_expanded_label"))
     check("collapsing returns to ten", r.get("top_recollapsed") == 10,
           r.get("top_recollapsed"))
-    check("merged view shows all seven distinct opportunities uncapped",
-          r.get("top_merged_cards") == 7, r.get("top_merged_cards"))
-    check("re-ticking it returns to 7", r["cards_remerged"] == 7, r["cards_remerged"])
+    check("merged view is also capped at ten (57 distinct opportunities)",
+          r.get("top_merged_cards") == 10, r.get("top_merged_cards"))
+    check("re-ticking it returns to ten", r["cards_remerged"] == 10, r["cards_remerged"])
     check("distance slider narrows the list",
           r["cards_10mi"] < r["cards_default"], (r["cards_10mi"], r["cards_default"]))
-    check("distance slider restores", r["cards_back"] == 7, r["cards_back"])
+    check("distance slider restores", r["cards_back"] == 10, r["cards_back"])
     check("time-gap filter narrows the list",
           r["cards_gap1yr"] < r["cards_default"], r["cards_gap1yr"])
     check("location-quality 'high only' narrows the list",
           r["cards_highonly"] < r["cards_default"], r["cards_highonly"])
-    check("location-quality restores", r["cards_confback"] == 7, r["cards_confback"])
+    check("location-quality restores", r["cards_confback"] == 10, r["cards_confback"])
     check("'circle for every project' draws more geometry",
           r["paths_allradii"] > r["paths_baseline"],
           (r["paths_allradii"], r["paths_baseline"]))
-    check("ITS partner toggle changes the result",
-          r["cards_partners"] != r["cards_nopartners"] or r["cards_partners"] >= 7,
-          (r["cards_partners"], r["cards_nopartners"]))
     check("hiding non-overlapping projects removes geometry",
           r["paths_overlaponly"] < r["paths"], (r["paths_overlaponly"], r["paths"]))
     d = r.get("detail", "")
     check("clicking a card opens a detail panel", len(d) > 50, len(d))
     check("detail panel explains the 25-mile radius test", "25-mile" in d or "25 mi" in d)
-    check("detail panel shows a cost figure", "$" in d)
+    # The globally top-ranked pair need not involve Dominion any more (GTC/MEAG/
+    # Dalton Utilities pairs can outrank it), so the cost-figure check uses a
+    # Dominion-involving pair specifically -- only Dominion publishes a cost.
+    dom_d = r.get("dom_detail", "")
+    check("a Dominion-involving pair's detail panel shows a cost figure", "$" in dom_d, dom_d[:120])
     check("top opportunity is selected on load",
           bool(r.get("selected_on_load")), r.get("selected_on_load"))
 

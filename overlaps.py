@@ -16,18 +16,29 @@ and are shown next to every estimate in the map.
 
 Called by run_all.py: compute(projects) returns (pairs, its_partner_pairs, opportunities, projects).
 """
+import itertools
 import math
 import re
 
 import pandas as pd
 
-MAX_MILES = 25
+DEFAULT_MAX_MILES = 25
+# A company's own coordination radius, if it wants something other than the default.
+# Empty by default (every company uses DEFAULT_MAX_MILES); e.g. {"Dalton Utilities": 40}
+# gives Dalton Utilities alone a wider reach without touching anyone else's config.
+COMPANY_MAX_MILES = {}
+MAX_MILES = DEFAULT_MAX_MILES        # kept for callers that just want "the" distance rule as one number
 TIME_SCALE_DAYS = 5 * 365
 GEO_WEIGHT, TIME_WEIGHT = 0.7, 0.3
 CONF_WEIGHT = {"high": 1.0, "medium": 0.9, "low": 0.7}
 CONF_RANK = {"high": 3, "medium": 2, "low": 1}
-UTIL_A, UTIL_B = "Dominion Energy South Carolina", "Georgia Power"
-GEORGIA_POWER_SPONSORS = {"GPC", "SAV"}      # GTC / MEAG / DU are ITS partners in the same plan
+
+
+def max_miles_for(util_a, util_b):
+    """A pair's overlap threshold: the LARGER of the two companies' own radii, so a
+    company that configures a wider reach still catches distant neighbours without
+    needing the other company's setting touched."""
+    return max(COMPANY_MAX_MILES.get(util_a, DEFAULT_MAX_MILES), COMPANY_MAX_MILES.get(util_b, DEFAULT_MAX_MILES))
 
 ASSUMPTIONS = {
     "row_width_ft": {46: 60, 69: 60, 115: 75, 138: 85, 161: 100, 230: 125, 500: 175},
@@ -99,7 +110,11 @@ def coordination_estimate(pa, pb, gap_days=0):
     out = {"coordination_type": "nearby", "min_separation_mi": round(sep, 1), "shared_corridor_mi": 0.0,
            "acres_separate": 0.0, "acres_shared": 0.0, "acres_saved": 0.0, "schedule_fit": round(sched, 2),
            "est_savings_low_usd": None, "est_savings_high_usd": None}
-    cost = pa.get("total_cost_usd")            # Georgia costs are REDACTED; use Dominion's as a floor
+    # Georgia-side companies redact their costs, so whichever side of the pair actually
+    # published a cost is the one used (order of a/b is just alphabetical by company).
+    cost = pa.get("total_cost_usd")
+    if not (pd.notna(cost) and bool(cost)):
+        cost = pb.get("total_cost_usd")
     has_cost = pd.notna(cost) and bool(cost)
     share_of_cost = 0.0
     if is_line(pa) and is_line(pb):
@@ -140,10 +155,13 @@ def why(row, est):
     return "; ".join(bits)
 
 
-def find_overlaps(projects, b_filter):
-    A = projects[projects["utility"] == UTIL_A]
-    B = projects[projects["utility"] == UTIL_B]
-    B = B[b_filter(B)]
+def find_overlaps_between(projects, util_a, util_b):
+    """Every pair (a from util_a, b from util_b) whose centres are closer than this pair's
+    threshold (the larger of the two companies' own radii, see max_miles_for).
+    Unranked -- compute() concatenates every company pair and ranks the result once."""
+    A = projects[projects["utility"] == util_a]
+    B = projects[projects["utility"] == util_b]
+    max_mi = max_miles_for(util_a, util_b)
     rows = []
     for _, a in A.iterrows():
         if a["lat_center"] != a["lat_center"] or a["confidence"] == "none":
@@ -152,16 +170,16 @@ def find_overlaps(projects, b_filter):
             if b["lat_center"] != b["lat_center"] or b["confidence"] == "none":
                 continue
             d = haversine_miles(a["lat_center"], a["lon_center"], b["lat_center"], b["lon_center"])
-            if d >= MAX_MILES:
+            if d >= max_mi:
                 continue
             da, db = pd.to_datetime(a["in_service_date"]), pd.to_datetime(b["in_service_date"])
             gap = abs((da - db).days)
-            geo = 1 - d / MAX_MILES
+            geo = 1 - d / max_mi
             tim = 1 - min(gap, TIME_SCALE_DAYS) / TIME_SCALE_DAYS
             score = GEO_WEIGHT * geo + TIME_WEIGHT * tim
             conf = min(a["confidence"], b["confidence"], key=lambda c: CONF_RANK[c])
             row = {
-                "distance_mi": round(d, 2), "time_gap (day)": gap,
+                "distance_mi": round(d, 2), "max_mi": max_mi, "time_gap (day)": gap,
                 "utility_a": a["utility"], "project_id_a": a["project_id"], "project_name_a": a["project_name"],
                 "utility_b": b["utility"], "project_id_b": b["project_id"], "project_name_b": b["project_name"],
                 "sponsor_b": b.get("sponsor", ""),
@@ -174,13 +192,7 @@ def find_overlaps(projects, b_filter):
             row.update(est)
             row["why"] = why(row, est)
             rows.append(row)
-    df = pd.DataFrame(rows)
-    if df.empty:
-        return df
-    df = df.sort_values(["rank_score", "distance_mi"], ascending=[False, True]).reset_index(drop=True)
-    df.insert(0, "rank", df.index + 1)
-    df.insert(1, "overlap_id", [f"OVL_{i}" for i in df["rank"]])
-    return df
+    return pd.DataFrame(rows)
 
 
 def add_groups(projects):
@@ -226,24 +238,34 @@ def build_opportunities(ov):
     return opp
 
 
+def companies_in(projects):
+    """Every company with at least one located project, alphabetical (fixes a/b order below)."""
+    located = projects[projects["lat_center"].notna() & (projects["confidence"] != "none")]
+    return sorted(located["utility"].dropna().unique())
+
+
 def compute(verified):
     """verified: the project table from verify.py.
-    Returns (pairs, its_partner_pairs, opportunities, projects with per-project overlap columns)."""
+    All C(n, 2) company pairs are compared -- adding a 6th company costs no code here,
+    just one more parser and one more row in the companies registry (build_map.py).
+    Returns (pairs, opportunities, projects with per-project overlap columns)."""
     projects = add_groups(verified.copy())
-    gp = find_overlaps(projects, lambda B: B["sponsor"].isin(GEORGIA_POWER_SPONSORS))
-    allb = find_overlaps(projects, lambda B: B["sponsor"].notna())
-    opps = build_opportunities(gp)
-    partners = allb[~allb["sponsor_b"].isin(GEORGIA_POWER_SPONSORS)].reset_index(drop=True)
-    partners["rank"] = partners.index + 1
-    partners["overlap_id"] = [f"ITS_{i}" for i in partners["rank"]]
+    companies = companies_in(projects)
+    frames = [find_overlaps_between(projects, u_a, u_b) for u_a, u_b in itertools.combinations(companies, 2)]
+    pairs = pd.concat([f for f in frames if not f.empty], ignore_index=True) if frames else pd.DataFrame()
+    if not pairs.empty:
+        pairs = pairs.sort_values(["rank_score", "distance_mi"], ascending=[False, True]).reset_index(drop=True)
+        pairs.insert(0, "rank", pairs.index + 1)
+        pairs.insert(1, "overlap_id", [f"OVL_{i}" for i in pairs["rank"]])
+    opps = build_opportunities(pairs)
 
     # per-project overlap columns (same layout as the starter workbook)
     ov = {}
-    for _, r in gp.iterrows():
+    for _, r in pairs.iterrows():
         ov.setdefault(r["project_id_a"], []).append((r["distance_mi"], r["project_id_b"]))
         ov.setdefault(r["project_id_b"], []).append((r["distance_mi"], r["project_id_a"]))
     projects["overlap_count"] = projects["project_id"].map(lambda i: len(ov.get(i, [])))
     for k in range(3):
         projects[f"overlap_{k + 1}"] = projects["project_id"].map(
             lambda i: sorted(ov.get(i, []))[k][1] if len(ov.get(i, [])) > k else None)
-    return gp, partners, opps, projects
+    return pairs, opps, projects

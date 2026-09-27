@@ -1,67 +1,97 @@
-# Gridlock: where two utilities' construction plans collide
+# Gridlock: where utilities' construction plans collide
 
 Sperry Tech / Shell Hacks 2026 challenge. Compares the public planned transmission projects of
-**Dominion Energy South Carolina** and **Georgia Power**, finds the pairs that are within 25 miles of
-each other, and ranks them as coordination opportunities.
+**5 Southeast utilities** &mdash; **Dominion Energy South Carolina**, **Georgia Power**,
+**Georgia Transmission Corporation (GTC)**, **Municipal Electric Authority of Georgia (MEAG)** and
+**Dalton Utilities** &mdash; finds every pair of projects (from any two of the five) that are within
+25 miles of each other, and ranks them as coordination opportunities. GTC, MEAG and Dalton Utilities
+are sponsor codes inside Georgia's own ITS Ten-Year Plan filing, split out into their own companies
+rather than lumped under Georgia Power or excluded as "partners" &mdash; adding a 6th company is one more
+PDF parser plus one line in `build_map.py`'s company registry, nothing else changes.
 
 **Open `gridlock_map.html` in a browser** for the interactive map. Needs internet for the map tiles.
 
+## Per-company coordination radius
+
+Every company defaults to the same 25-mile threshold, but that's a config value, not a
+constant baked into the logic: `overlaps.py`'s `COMPANY_MAX_MILES` dict lets any company
+declare its own radius (e.g. `{"Dalton Utilities": 45}` gives Dalton Utilities alone a wider
+reach). A pair's actual threshold is the **larger** of the two companies' radii, so widening
+one company's setting never needs the other side touched. The map picks this up automatically:
+the "Max distance" filter's range, the circle drawn around each project, and every "X-mile
+radius" label all read the real per-pair threshold (`overlap.maxMi` in the map's data) instead
+of assuming 25 for everyone. When every company shares one radius the map still just says
+"25-mile radius" for simplicity; once they differ it switches to labelling each circle with its
+own number.
+
 ## How to read the map
 
-* Pick a card in the ranked list. The map draws a **25-mile circle centred on the Dominion project**
-  (blue). A Georgia Power project (orange) whose centre is inside the circle overlaps it. The two
-  projects are labelled with their company name, and a red line shows the distance between the centres.
-* Other Georgia Power projects inside the same circle are drawn too, so you can see what crosses it.
-* **Click any project on the map**, Dominion or Georgia Power, to make it the centre: the 25-mile circle is
-  drawn around it and the other company's projects whose centres are inside are numbered, with their
-  distances in the side panel. Click a numbered badge to move the centre to that project. Distance is the
-  same both ways, so this finds the same pairs as the list, and it also works for projects that overlap nothing.
-* **Letters and numbers:** the project at the centre of the circle has a letter, **D** (Dominion) or **G**
-  (Georgia Power). The numbered badges are the *other* company's projects whose centres are inside the circle
-  (orange circles = Georgia Power, blue squares = Dominion), so each one forms an overlap pair with the centre
-  project. A number only means "within 25 miles, worth looking at for coordination". It does not mean the two
-  companies already work together, and it has nothing to do with the ITS-partner projects (GTC / MEAG / DU)
-  from Georgia's plan, which have no overlaps with Dominion and are left out of the map.
-* A project with two substations is two dots (the substations) joined by a line (blue Dominion, orange
-  Georgia Power). A project with only one location has no line and
-  is a single larger shape instead: a square for Dominion, a circle for Georgia Power (hollow if it overlaps
-  nothing). Red glow = the project takes part in an overlap. Dotted line or dashed outline = low-confidence location.
+* Pick a card in the ranked list. The map draws a **25-mile circle centred on one project's centre**
+  (its letter badge, colored by that project's company). Every other company's project whose centre is
+  inside the circle overlaps it. The two selected projects are labelled with their company name, and a
+  red line shows the distance between the centres.
+* Other companies' projects inside the same circle are drawn too, each with its own numbered badge and
+  color, so you can see everything that crosses it.
+* **Click any project on the map** to make it the centre: the 25-mile circle is drawn around it and every
+  other company's project whose centre is inside is numbered, with distances in the side panel. Click a
+  numbered badge to move the centre to that project. Distance is the same both ways, so this finds the
+  same pairs as the list, and it also works for projects that overlap nothing.
+* **Letters and numbers:** the project at the centre of the circle has a letter badge, one per company
+  (D = Dominion, G = Georgia Power, T = GTC, M = MEAG, U = Dalton Utilities). The numbered badges are the
+  *other* companies' projects whose centres are inside the circle, each colored by its own company. A
+  number only means "within 25 miles, worth looking at for coordination" &mdash; it does not mean the two
+  companies already work together.
+* A project with two substations is two dots (the substations) joined by a line, colored by company. A
+  project with only one location has no line and is a single dot instead (hollow if it overlaps nothing).
+  Red glow = the project takes part in an overlap. Dotted line or dashed outline = low-confidence location.
 * Filters: maximum distance, time gap, location quality. Tick *draw the 25-mile circle for every
-  overlapping Dominion project* to see all the circles at once.
+  overlapping project* to see all the circles at once.
 
 ## Result
 
 | | |
 |---|---|
-| Projects parsed | 44 Dominion + 208 Georgia (138 Georgia Power, 70 from its ITS partners GTC / MEAG / DU) |
-| Located | 42 of 44 Dominion, 120 of 138 Georgia Power |
-| Overlaps (centres < 25 mi) | **55 pairs**: 8 Dominion projects x 17 Georgia Power projects, which merge into **7 distinct opportunities** |
-| Closer than 10 mi | 13 pairs (3 under 5 mi) |
-| Close in *both* distance and time (< 10 mi and <= 1 yr) | 3 pairs |
+| Projects parsed | 44 Dominion + 208 Georgia-filing (138 Georgia Power, 54 GTC, 14 MEAG, 2 Dalton Utilities) |
+| Located | 42/44 Dominion, 120/138 Georgia Power, 47/54 GTC, 13/14 MEAG, 2/2 Dalton Utilities (224 of 252 total) |
+| Overlaps (centres < 25 mi), all 10 company pairs checked | **457 pairs**, which merge into **57 distinct opportunities** |
+| Dominion x Georgia Power alone (the original 2-company scope) | 55 pairs -> 7 opportunities, unchanged by adding the other 3 companies |
+| Closer than 10 mi | 116 pairs (35 under 5 mi) |
+| Close in *both* distance and time (< 10 mi and <= 1 yr) | 38 pairs |
 
-Most projects do **not** overlap: 82 % of Dominion and 88 % of Georgia Power projects have no
-neighbour inside 25 miles. The overlaps sit in two clusters, **Savannah / Hilton Head**
-(Jasper, Okatie, McIntosh, Goshen) and **Augusta / Thurmond** (Urquhart, Stevens Creek,
-Evans, Thomson).
+Most of the volume comes from the four Georgia-filing companies overlapping **each other**: GTC in
+particular builds statewide alongside Georgia Power, so it alone accounts for the majority of pairs.
+Dominion, the one out-of-state neighbor, only overlaps Georgia Power &mdash; its projects never land
+within 25 mi of a GTC, MEAG or Dalton Utilities project. The Dominion/Georgia-Power overlaps still sit in
+two clusters, **Savannah / Hilton Head** (Jasper, Okatie, McIntosh, Goshen) and **Augusta / Thurmond**
+(Urquhart, Stevens Creek, Evans, Thomson).
 
 ### Top coordination opportunities (duplicates removed)
 
-The 55 pairs are not 55 separate opportunities: several projects repeat (the "#5" and "#6" circuits
-of Evans - Thurmond, two phases of Stevens Creek - Hooks) and one Dominion project can sit near many
-Georgia projects. The ranked list therefore merges sibling projects into one corridor (same utility,
-identical end points and location) and lets each corridor appear in **at most one** opportunity,
-best pair first. The other nearby pairs stay attached to it as "related". Result: **7 opportunities**.
-The workbook's `overlaps` sheet still lists every pair, one row each; `top_opportunities` is the ranked list.
+The 457 pairs are not 457 separate opportunities: sibling projects repeat (the "#5" and "#6" circuits
+of Evans - Thurmond, two phases of Stevens Creek - Hooks) and one project can sit near many others. The
+ranked list therefore merges sibling projects into one corridor (same utility, identical end points and
+location) and lets each corridor appear in **at most one** opportunity, best pair first. The other nearby
+pairs stay attached to it as "related". Result: **57 opportunities**; the map and workbook both show the
+top 10 by default with a "show all" toggle. The workbook's `overlaps` sheet lists every pair, one row each;
+`top_opportunities` is the ranked list.
 
-| # | mi apart | days apart | Dominion project | Georgia Power project | notes |
-|---|---|---|---|---|---|
-| 1 | 5.7 | 152 | Jasper - Okatie 230 kV #2: Construct | McIntosh - Purrysburg 230 kV reactors | $0.26-0.61M avoided (shared substation area) |
-| 2 | 3.5 | 578 | Urquhart - Aiken PSA 46 kV rebuild | Fenwick St - Sand Bar Ferry 115 kV | low-confidence location |
-| 3 | 4.1 | 3074 | Hooks - Thurmond 115 kV tie rebuild | Evans Primary - Thurmond Dam 115 kV (#5, #6 merged) | same terminal, but ~8 yr apart so no savings |
-| 4 | 17.6 | 0 | Okatie - Bluffton 115 kV rebuild | Deptford - Magnolia 115 kV reconductor | same in-service date, but far apart |
-| 5 | 15.0 | 882 | Okatie 230-115 kV substation | Goshen (SAV) - Kraft 115 kV rebuild | |
-| 6 | 16.4 | 1389 | Urquhart - Toolebeck 115 kV rebuild | Goshen Area Strategic Solution | high-confidence location |
-| 7 | 16.6 | 3652 | Stevens Creek - Hooks 115 kV (2 phases merged) | Evans Primary - Thomson Primary 115 kV rebuild | |
+| # | mi apart | days apart | conf | Company A | Project A | Company B | Project B |
+|---|---|---|---|---|---|---|---|
+| 1 | 0.0 | 0 | high | Georgia Power | Dresden Line Protective Relaying | GTC | Dresden 500kV Bus Expansion |
+| 2 | 0.0 | 31 | medium | Georgia Power | CC - Summer Lake - Villa Rica 230kV Rebuild | GTC | Hickory Level - Villa Rica 230kV Line Reconductor |
+| 3 | 0.5 | 0 | medium | Georgia Power | Winder Primary 230kV Bus 1-2 Parallel Bus-Tie | GTC | Shoal Creek - South Hall 230kV Rebuild |
+| 4 | 2.0 | 0 | medium | Georgia Power | Echeconnee-Wellston 115kV Rebuild | GTC | Bonaire Pri-Echeconnee 115kV Partial Rebuild |
+| 5 | 0.0 | 365 | medium | Georgia Power | Adamsville - Buzzard Roost 230kV Rebuild | GTC | Adamsville - Buzzard Roost 230kV Rebuild |
+| 6 | 4.0 | 0 | medium | GTC | Bonaire Pri-Echeconnee 115kV Partial Rebuild | MEAG | Aultman Road - Bonaire Primary 115kV Rebuild |
+| 7 | 3.6 | 92 | medium | Georgia Power | Palmyra Reactor Removal | GTC | Lizard Lope - Westover 115kV New Line |
+| 8 | 0.0 | 730 | medium | GTC | SKC 115kV Bus and Jumper Replacement | MEAG | Alcovy Road - SKC 115kV Reconductor |
+| 9 | 0.0 | 1278 | high | Georgia Power | Gordon-Sandersville #1 115kV Line Rebuild | GTC | Gordon - Sandersville #1 115kV Line Rebuild |
+| 10 | 2.2 | 366 | medium | Georgia Power | CC - Villa Rica Upgrades | GTC | Douglasville - Villa Rica 230kV Rebuild |
+
+The original 2-company opportunities (Jasper - Okatie / McIntosh - Purrysburg and the rest, see
+`Projects_Overlaps.xlsx` or run the pipeline) still rank lower here: they're real distances of several
+miles, while several GTC/Georgia-Power pairs above sit at 0.0-2.0 mi with matching in-service windows,
+outranking them under the same distance + schedule scoring.
 
 ## How to run it
 
@@ -69,6 +99,10 @@ The workbook's `overlaps` sheet still lists every pair, one row each; `top_oppor
 pip install -r requirements.txt
 python run_all.py "path/to/Project Listings"     # folder holding "Dominion Energy/" and "Georgia Power/" PDFs
 ```
+
+Only 2 PDFs are needed: GTC, MEAG and Dalton Utilities are sponsor codes already inside the Georgia
+Power PDF's ITS Ten-Year Plan filing (Table 2's sponsor column), split into their own companies by
+`parse_projects.py` rather than requiring a separate source document.
 
 That is the only setup (Python 3.9+). Everything happens in memory, so there are no intermediate files.
 `data/` holds saved copies of the OpenStreetMap downloads (substations, state outlines, place lookups) so
@@ -86,7 +120,7 @@ The run prints the ranked opportunities in the terminal and writes `gridlock_map
 | `parse_projects.py` | Reads the two PDFs (PyMuPDF) into project tables. Georgia project detail sections give name / TEAMS # / need date / description; Table 2 gives the sponsor and transmission zone. |
 | `fetch_osm.py`, `fetch_border.py`, `geocode.py` | One bulk Overpass query for every GA/SC substation and plant, then name-matches each project's two end points. Unnamed substations are found by geocoding the place name and snapping to the nearest voltage-matched substation. |
 | `verify.py` | Grades every location high / medium / low / none and rejects false matches (see below). |
-| `overlaps.py` | Centre = midpoint of the two located end points; haversine distance; overlap if < 25 mi; time gap in days; score = 70 % distance + 30 % schedule; rough shared-corridor / shared-site value; merges duplicates into opportunities. |
+| `overlaps.py` | Centre = midpoint of the two located end points; haversine distance; overlap if < 25 mi; time gap in days; score = 70 % distance + 30 % schedule; rough shared-corridor / shared-site value; merges duplicates into opportunities. Checks every pair of the companies present in the data (`itertools.combinations`), so a 6th company needs no changes here. |
 | `build_map.py`, `export_xlsx.py` | `gridlock_map.html` and `Projects_Overlaps.xlsx` (same columns as the starter workbook plus confidence and estimate columns). |
 
 ### Confirming matches (Part 2)
@@ -110,7 +144,8 @@ McIntosh - Purrysburg).
 
 ### Rough cost / impact estimate (bonus)
 
-Georgia costs are REDACTED in the IRP, so estimates use the Dominion cost as a floor. A pair is a
+The four Georgia-filing companies' costs are REDACTED in the IRP, so estimates use whichever side of a
+pair actually published a cost as a floor &mdash; in practice, always the Dominion side today. A pair is a
 *shared corridor* (lines run within 3 mi of each other), a *shared site* (end points within 3.5 mi),
 or just *nearby*. Savings = 5-12 % of the shared cost, faded to zero as the in-service gap
 reaches 3 years. Right-of-way land savings are counted only when a project is a new build.
@@ -149,15 +184,16 @@ if span > MAX_LINE_MI and weak:                 # after
 An unlocated project is better than a 200-mile phantom line, because a phantom line has two wrong end
 points that can each invent overlaps.
 
-**Before and after, on the real filings:**
+**Before and after, on the real filings** (pair/opportunity counts are for Dominion x Georgia Power,
+the two companies this guard was tested against before the other three were split out):
 
 | | Before | After |
 |---|---|---|
 | Projects located | 226 | 224 |
 | Guard fired | 10 end points | 14 end points |
 | Projects spanning > 100 mi | 2 | **0** |
-| Overlapping pairs | 55 | 55 |
-| Distinct opportunities | 7 | 7 |
+| Overlapping pairs (Dominion x Georgia Power) | 55 | 55 |
+| Distinct opportunities (Dominion x Georgia Power) | 7 | 7 |
 
 The headline numbers do not move: those two projects were never close enough to a Dominion project to
 form a pair, so they were drawing fiction on the map without affecting the ranking. The two projects lost
@@ -167,23 +203,27 @@ Checked by `test_gridlock.py`, which asserts no located project spans more than 
 
 ## Limits to keep in mind
 
-* **Most overlaps involve dates that have already passed.** Only 4 of the 55 pairs have both in-service
-  dates after 2026-09-26; the source plans are 2024-2025 vintage. There is no "upcoming only" filter yet.
-* Locations are matched by **name**, not surveyed. 1 of 55 overlaps is *high* confidence, 49 *medium*
-  (usually one end point of two located), 5 *low* (street / place level). The map and workbook show this.
+* **Most overlaps involve dates that have already passed.** The source plans are 2024-2025 vintage, and
+  most pairs' in-service dates are already behind the current date. There is no "upcoming only" filter yet.
+* Locations are matched by **name**, not surveyed. The map and workbook show each pair's confidence
+  (high / medium / low) so this is visible rather than hidden.
 * Projects are drawn as **straight lines** between their two substations; real routes are longer.
 * Two projects are dropped by the implausible-span guard above rather than placed wrongly; they count
   among the unlocated.
-* 18 Georgia Power projects and 2 Dominion projects could not be located. "Rice Hope" is close to
-  Savannah but has no public coordinates, so it is left unlocated instead of guessed.
+* 28 of the 252 parsed projects could not be located at all (18 Georgia Power, 7 GTC, 2 Dominion, 1 MEAG).
+  "Rice Hope" is close to Savannah but has no public coordinates, so it is left unlocated instead of guessed.
 * Georgia dates are the plan's *need date*; Dominion dates are *planned in-service*.
-* The ITS-partner (GTC / MEAG / DU) projects produce no overlaps with Dominion and are left out of the
-  workbook and the map.
+* GTC, MEAG and Dalton Utilities overlap Georgia Power and each other frequently (they all build within
+  Georgia), but none of them overlap a Dominion project &mdash; Dominion's only cross-company neighbor is
+  Georgia Power.
 * Only public filings were used.
 
 ## To do / ideas for later
 
-* **Numbered badges on the map:** decide whether to keep two colours (orange circles = Georgia Power projects,
-  blue squares = Dominion projects) or make every number one neutral colour. In any one view all the numbers
-  belong to the same company, so the colour only repeats what the "D" / "G" centre badge already says. If it
-  changes, also simplify the "numbers = the other company's projects" row in the map key.
+* **A genuinely new PDF source**, not just splitting sponsor codes already in the Georgia filing: Santee
+  Cooper and Duke Energy Carolinas/Progress both publish public integrated resource plans with a
+  transmission-planning section and are geographically adjacent to Dominion's SC territory, so they're
+  the most likely candidates to produce real new overlaps rather than just more Georgia-internal ones.
+* **A 6th+ company shouldn't need UI changes** beyond `build_map.py`'s `COMPANY_STYLE` registry (color +
+  short name + centre-badge letter) and a parser emitting the standard project schema; worth confirming
+  once a 6th real source is added.

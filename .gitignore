@@ -1,6 +1,8 @@
 __pycache__/
 *.pyc
 *.stackdump
+.claude/
+Projects_Overlaps.xlsx
 
 # data/: commit only the small saved downloads that make a fresh clone instant and reproducible
 /data/*

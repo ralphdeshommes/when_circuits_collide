@@ -184,6 +184,16 @@ def parse_gpc_sponsors():
 
 PREFIX_SPONSOR = {"SAV": "SAV", "GTC": "GTC", "MEAG": "MEAG", "DU": "DU"}
 
+# Sponsor code -> the company that actually owns the project. GPC and SAV are both
+# Georgia Power (SAV = the old Savannah Electric brand); GTC, MEAG and Dalton Utilities
+# are separate ITS-partner utilities that file into the same Georgia plan.
+SPONSOR_COMPANY = {
+    "GPC": "Georgia Power", "SAV": "Georgia Power",
+    "GTC": "Georgia Transmission Corporation",
+    "MEAG": "Municipal Electric Authority of Georgia",
+    "DU": "Dalton Utilities",
+}
+
 
 def parse_gpc():
     df = parse_gpc_details()
@@ -199,7 +209,7 @@ def parse_gpc():
     df["sponsor"] = df.apply(guess, axis=1)
     df = df.drop_duplicates("source_id").reset_index(drop=True)
     df.insert(0, "project_id", [f"GPC_{i}" for i in range(1, len(df) + 1)])
-    df.insert(1, "utility", "Georgia Power")
+    df.insert(1, "utility", df["sponsor"].map(SPONSOR_COMPANY).fillna("Georgia Power"))
     df.insert(2, "state", "GA")
     return df
 
