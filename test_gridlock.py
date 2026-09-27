@@ -257,6 +257,30 @@ try {
   out.count_default = el('listcount').textContent.trim();
   out.paths = document.querySelectorAll('path').length;
 
+  // The controls are two disclosure groups now, so the collapsed summaries have
+  // to state what is set or hiding them hides the state of the map.
+  out.ctl_groups = document.querySelectorAll('.controls .grp').length;
+  out.ctl_closed_by_default = !el('grp-filter').open && !el('grp-display').open;
+  out.ctl_slider_stays_visible = el('miles').offsetParent !== null;
+  out.ctl_state_default = [el('st-filter').textContent, el('st-display').textContent];
+  el('gap').value = '365'; fire(el('gap'));
+  el('radii').checked = true; fire(el('radii'));
+  out.ctl_state_changed = [el('st-filter').textContent, el('st-display').textContent];
+  el('gap').value = '99999'; fire(el('gap'));
+  el('radii').checked = false; fire(el('radii'));
+  out.ctl_state_restored = [el('st-filter').textContent, el('st-display').textContent];
+  el('grp-display').open = true;
+  out.ctl_boxes_reachable = el('grp-display').querySelectorAll('input').length;
+  el('grp-display').open = false;
+  // the rank chip inverts the surface; a literal white text colour made it
+  // vanish in dark mode
+  const chipLuma = () => { const c = getComputedStyle(document.querySelector('.rank'));
+    const L = x => { const m = x.match(/\d+/g); return m ? (+m[0] + +m[1] + +m[2]) / 3 : 0; };
+    return Math.abs(L(c.backgroundColor) - L(c.color)); };
+  root0().setAttribute('data-theme', 'light'); out.chip_contrast_light = chipLuma();
+  root0().setAttribute('data-theme', 'dark');  out.chip_contrast_dark = chipLuma();
+  root0().removeAttribute('data-theme');
+
   // Light / dark. The interface surfaces must actually repaint, and the choice
   // must be reversible -- a half-themed panel is worse than none.
   const cs = e => getComputedStyle(e);
@@ -555,6 +579,23 @@ def test_map():
           "from 55 pairs" in r["count_default"], r["count_default"])
     # The ranked list is the deliverable, so it must be visible in the sidebar
     # without scrolling past the map key, which is long and read once.
+    check("the controls collapse into two groups",
+          r.get("ctl_groups") == 2 and r.get("ctl_closed_by_default"),
+          r.get("ctl_groups"))
+    check("the distance slider stays visible", r.get("ctl_slider_stays_visible"))
+    check("collapsed groups report their state",
+          r.get("ctl_state_default") == ["none", "default"], r.get("ctl_state_default"))
+    check("the state updates when a control changes",
+          r.get("ctl_state_changed") == ["within 1 year", "1 changed"],
+          r.get("ctl_state_changed"))
+    check("and returns to default when undone",
+          r.get("ctl_state_restored") == ["none", "default"], r.get("ctl_state_restored"))
+    check("every checkbox is still reachable inside its group",
+          r.get("ctl_boxes_reachable") == 5, r.get("ctl_boxes_reachable"))
+    check("the rank chip stays legible in both themes",
+          r.get("chip_contrast_light", 0) > 80 and r.get("chip_contrast_dark", 0) > 80,
+          (r.get("chip_contrast_light"), r.get("chip_contrast_dark")))
+
     check("there is a light/dark toggle", r.get("theme_btn"))
     check("every interface surface repaints in dark",
           r.get("theme_all_surfaces_darkened"),

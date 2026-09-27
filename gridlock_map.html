@@ -108,7 +108,27 @@
   .kpi .sw.d { background: var(--desc); } .kpi .sw.g { background: var(--gpc); }
   .legend { display: flex; gap: 14px; flex-wrap: wrap; margin-top: 10px; font-size: 12px; color: var(--muted); }
   .legend i { display: inline-block; width: 18px; height: 0; border-top: 4px solid; vertical-align: middle; margin-right: 5px; }
-  .controls { padding: 10px 18px; border-bottom: 1px solid var(--line); display: grid; gap: 8px; font-size: 12.5px; }
+  /* The controls used to be nine stacked rows, four of them long enough to wrap
+     onto a second line. They are now one visible slider plus two disclosure
+     groups whose summaries state what is set, so the panel stays quiet until
+     you need it. */
+  .controls { padding: 14px 18px 16px; border-bottom: 1px solid var(--line); display: grid;
+              gap: 10px; font-size: 12.5px; }
+  .grp { border: 1px solid var(--line); border-radius: 8px; background: var(--bg); }
+  .grp > summary { display: flex; align-items: center; gap: 8px; padding: 9px 11px; cursor: pointer;
+                   font-weight: 600; color: var(--ink); list-style: none; border-radius: 8px; }
+  .grp > summary::-webkit-details-marker { display: none; }
+  .grp > summary::before { content: "\25B8"; color: var(--muted); transition: transform .15s;
+                           display: inline-block; font-size: 10px; }
+  .grp[open] > summary::before { transform: rotate(90deg); }
+  .grp > summary:hover { background: var(--hover); }
+  .grp .state { margin-left: auto; font-weight: 400; color: var(--muted); font-size: 11.5px; }
+  .grp[open] > summary { border-bottom: 1px solid var(--line); border-radius: 8px 8px 0 0; }
+  .grp > .row, .grp > .chk { margin: 0 11px; }
+  .grp > .row:first-of-type { margin-top: 10px; }
+  .grp > .chk:last-of-type { margin-bottom: 11px; }
+  .grp > .row + .row, .grp > .chk + .chk { margin-top: 9px; }
+  .grp > .row:last-of-type { margin-bottom: 11px; }
   .row { display: flex; align-items: center; gap: 8px; }
   .row label { min-width: 92px; color: var(--muted); }
   .row input[type=range] { flex: 1; accent-color: var(--control); }
@@ -147,7 +167,7 @@
   .card.sel { border-color: var(--ovl); box-shadow: 0 0 0 2px rgba(196,35,45,.15); }
   .card:focus-visible { outline: 2px solid var(--ovl); outline-offset: 1px; }
   .card .top { display: flex; justify-content: space-between; align-items: center; font-weight: 600; }
-  .rank { background: var(--ink); color: #fff; border-radius: 6px; padding: 1px 7px; font-size: 12px; margin-right: 6px; }
+  .rank { background: var(--ink); color: var(--panel); border-radius: 6px; padding: 1px 7px; font-size: 12px; margin-right: 6px; }
   .badge { font-size: 10.5px; border-radius: 999px; padding: 1px 8px; border: 1px solid; }
   .badge.high { color: var(--ok); border-color: var(--ok); } .badge.medium { color: var(--warn); border-color: var(--warn); } .badge.low { color: var(--ovl); border-color: var(--ovl); }
   .nm { margin-top: 6px; font-size: 12.5px; }
@@ -238,15 +258,21 @@
     </header>
     <section class="controls" aria-label="Filters">
       <div class="row"><label for="miles">Max distance</label><input id="miles" type="range" min="2" max="25" step="1" value="25"><output id="miles-out">25 mi</output></div>
-      <div class="row"><label for="gap">Time gap</label>
-        <select id="gap"><option value="99999">any</option><option value="365">within 1 year</option><option value="730">within 2 years</option><option value="1825">within 5 years</option></select></div>
-      <div class="row"><label for="conf">Location quality</label>
-        <select id="conf"><option value="1">any</option><option value="2">medium or better</option><option value="3">high only</option></select></div>
-      <label class="chk"><input id="showall" type="checkbox" checked> show projects that do not overlap</label>
-      <label class="chk"><input id="group" type="checkbox" checked> merge duplicates (one row per opportunity)</label>
-      <label class="chk"><input id="radii" type="checkbox"> draw the 25-mile circle for every overlapping Dominion project</label>
-      <label class="chk"><input id="radiiG" type="checkbox"> draw the 25-mile circle for every overlapping Georgia Power project</label>
-      <label class="chk"><input id="partners" type="checkbox"> include Georgia ITS partner projects (GTC / MEAG / DU)</label>
+      <details class="grp" id="grp-filter">
+        <summary>Filters<span class="state" id="st-filter"></span></summary>
+        <div class="row"><label for="gap">Time gap</label>
+          <select id="gap"><option value="99999">any</option><option value="365">within 1 year</option><option value="730">within 2 years</option><option value="1825">within 5 years</option></select></div>
+        <div class="row"><label for="conf">Location quality</label>
+          <select id="conf"><option value="1">any</option><option value="2">medium or better</option><option value="3">high only</option></select></div>
+      </details>
+      <details class="grp" id="grp-display">
+        <summary>Map display<span class="state" id="st-display"></span></summary>
+        <label class="chk"><input id="showall" type="checkbox" checked> Projects with no overlap</label>
+        <label class="chk"><input id="group" type="checkbox" checked> Merge duplicate corridors</label>
+        <label class="chk"><input id="radii" type="checkbox"> All Dominion circles</label>
+        <label class="chk"><input id="radiiG" type="checkbox"> All Georgia Power circles</label>
+        <label class="chk"><input id="partners" type="checkbox"> Georgia ITS partners</label>
+      </details>
     </section>
     <div id="listhead"><div id="listtitle">Top coordination opportunities</div><span id="listcount"></span></div>
     <div id="listwrap"><div id="list"></div></div>
@@ -856,6 +882,21 @@ map.on('mousemove', e => {
 map.on('mouseout', clearHover);
 
 if (!DATA.partners.length) document.getElementById('partners').closest('label').style.display = 'none';
+// A collapsed group should still say what it is doing, otherwise hiding the
+// controls just hides the state of the map.
+const BOX_DEFAULTS = {showall: true, group: true, radii: false, radiiG: false, partners: false};
+function syncGroupState() {
+  const gap = document.getElementById('gap'), conf = document.getElementById('conf');
+  const g = gap.options[gap.selectedIndex].text, c = conf.options[conf.selectedIndex].text;
+  const set = [g, c].filter(t => t !== 'any');
+  document.getElementById('st-filter').textContent = set.length ? set.join(' \u00b7 ') : 'none';
+  const changed = Object.keys(BOX_DEFAULTS).filter(id => {
+    const b = document.getElementById(id);
+    return b && b.offsetParent !== null && b.checked !== BOX_DEFAULTS[id];
+  }).length;
+  document.getElementById('st-display').textContent = changed ? changed + ' changed' : 'default';
+}
+
 // ---- light / dark -------------------------------------------------------
 // With nothing stored the page follows the system setting; the button records
 // an explicit choice that overrides it. Storage is wrapped because a file://
@@ -884,7 +925,8 @@ if (!DATA.partners.length) document.getElementById('partners').closest('label').
   });
 })();
 
-['miles', 'gap', 'conf', 'showall', 'group', 'radii', 'radiiG', 'partners'].forEach(id => document.getElementById(id).addEventListener('input', render));
+['miles', 'gap', 'conf', 'showall', 'group', 'radii', 'radiiG', 'partners'].forEach(id => document.getElementById(id).addEventListener('input', () => { syncGroupState(); render(); }));
+syncGroupState();
 render();
 if (visible.length) select(visible[0].id, false);
 </script>
