@@ -259,6 +259,7 @@ CHROME_PATHS = [
 PROBE = r"""
 <script>
 const out = {};
+const root0 = () => document.documentElement;
 const SELECTED_ON_LOAD = (typeof selected !== 'undefined' && selected) ? String(selected) : '';
 const fire = el => el.dispatchEvent(new Event('input', {bubbles: true}));
 const cards = () => document.querySelectorAll('.card').length;
@@ -267,6 +268,36 @@ try {
   out.cards_default = cards();
   out.count_default = el('listcount').textContent.trim();
   out.paths = document.querySelectorAll('path').length;
+
+  // The list is ranked by score, but the card only showed distance and days --
+  // neither monotonic -- so an ordered list read as unordered.
+  const scores = () => [...document.querySelectorAll('.card .scorebar span')]
+    .map(e => parseFloat(e.textContent));
+  // each card has two .fig elements now -- the distance line and the score --
+  // so take the first per card, not a flat selector
+  const dists = () => [...document.querySelectorAll('.card')]
+    .map(c => parseFloat(c.querySelector('.fig').textContent));
+  out.ord_scorebars = document.querySelectorAll('.card .scorebar').length;
+  out.ord_scores = scores();
+  out.ord_descending = scores().every((v, i, a) => i === 0 || a[i - 1] >= v);
+  el('sortby').value = 'dist'; fire(el('sortby'));
+  out.ord_by_distance = dists().every((v, i, a) => i === 0 || a[i - 1] <= v);
+  el('sortby').value = 'gap'; fire(el('sortby'));
+  out.ord_by_gap_ran = document.querySelectorAll('.card').length > 0;
+  el('sortby').value = 'date'; fire(el('sortby'));
+  out.ord_by_date_ran = document.querySelectorAll('.card').length > 0;
+  el('sortby').value = 'score'; fire(el('sortby'));
+  out.ord_restored = scores().every((v, i, a) => i === 0 || a[i - 1] >= v);
+
+  // the panel folds away so the map can have the window
+  out.side_map_w_open = Math.round(el('map').getBoundingClientRect().width);
+  out.side_reopen_hidden_when_open = getComputedStyle(el('sideopen')).display === 'none';
+  el('sidebtn').click();
+  out.side_hidden = el('app').classList.contains('sidehidden');
+  out.side_map_w_closed = Math.round(el('map').getBoundingClientRect().width);
+  out.side_reopen_shown = getComputedStyle(el('sideopen')).display !== 'none';
+  el('sideopen').click();
+  out.side_map_w_back = Math.round(el('map').getBoundingClientRect().width);
 
   const g = el('group');
   out.top_merged_cards = cards();
@@ -299,6 +330,21 @@ try {
   // The page auto-selects the top opportunity, and that selection draws extra
   // geometry. A filter that hides the selected pair clears it, so re-select
   // before measuring or the comparison is against a different baseline.
+  // Per-company circle checkboxes: one per company, not one blanket toggle.
+  const radiiBoxes = [...document.querySelectorAll('.radii-co')];
+  out.radii_checkbox_count = radiiBoxes.length;
+  out.paths_no_circles = document.querySelectorAll('path').length;
+  const domBox = radiiBoxes.find(b => b.dataset.company === 'Dominion Energy South Carolina');
+  domBox.checked = true; fire(domBox);
+  out.paths_dom_circles = document.querySelectorAll('path').length;
+  const gpcBox = radiiBoxes.find(b => b.dataset.company === 'Georgia Power');
+  gpcBox.checked = true; fire(gpcBox);
+  out.paths_dom_and_gpc_circles = document.querySelectorAll('path').length;
+  domBox.checked = false; fire(domBox);
+  out.paths_gpc_circles_only = document.querySelectorAll('path').length;
+  gpcBox.checked = false; fire(gpcBox);
+  out.paths_circles_cleared = document.querySelectorAll('path').length;
+
   document.querySelector('.card').click();
   const ra = el('radii');
   out.paths_baseline = document.querySelectorAll('path').length;
@@ -496,6 +542,39 @@ def test_map():
     check("opportunity list is populated", r["cards_default"] == 10, r["cards_default"])
     check("list header reports the de-duplication",
           "from 457 pairs" in r["count_default"], r["count_default"])
+    check("every card carries its score", r.get("ord_scorebars", 0) >= 5,
+          r.get("ord_scorebars"))
+    check("the default order really is best-score-first",
+          r.get("ord_descending"), r.get("ord_scores"))
+    check("ordering by distance sorts ascending", r.get("ord_by_distance"))
+    check("ordering by time gap and by date both render",
+          r.get("ord_by_gap_ran") and r.get("ord_by_date_ran"))
+    check("switching back restores the score order", r.get("ord_restored"))
+    check("hiding the panel gives the map the full window",
+          r.get("side_hidden") and r.get("side_map_w_closed", 0)
+          > r.get("side_map_w_open", 0) + 200,
+          (r.get("side_map_w_open"), r.get("side_map_w_closed")))
+    check("the reopen tab appears only while hidden",
+          r.get("side_reopen_hidden_when_open") and r.get("side_reopen_shown"))
+    check("reopening restores the panel width",
+          r.get("side_map_w_back") == r.get("side_map_w_open"),
+          (r.get("side_map_w_back"), r.get("side_map_w_open")))
+
+    check("there is one circle checkbox per company", r.get("radii_checkbox_count") == 5,
+          r.get("radii_checkbox_count"))
+    check("no circles drawn until a company is checked",
+          r.get("paths_dom_circles", 0) > r.get("paths_no_circles", 0),
+          (r.get("paths_no_circles"), r.get("paths_dom_circles")))
+    check("checking a second company adds more circles, not fewer",
+          r.get("paths_dom_and_gpc_circles", 0) > r.get("paths_dom_circles", 0),
+          (r.get("paths_dom_circles"), r.get("paths_dom_and_gpc_circles")))
+    check("unchecking one company removes only its circles",
+          r.get("paths_gpc_circles_only", 0) < r.get("paths_dom_and_gpc_circles", 0),
+          (r.get("paths_dom_and_gpc_circles"), r.get("paths_gpc_circles_only")))
+    check("unchecking every company returns to the baseline",
+          r.get("paths_circles_cleared") == r.get("paths_no_circles"),
+          (r.get("paths_no_circles"), r.get("paths_circles_cleared")))
+
     check("the ranked list is capped at ten", r.get("cards_unmerged") == 10,
           r.get("cards_unmerged"))
     check("the heading says Top 10 when capped",
@@ -588,6 +667,7 @@ def test_map():
           r.get("fold_reopens_on_pick"))
     check("and its details are actually shown", r.get("fold_pick_shows_body"))
     check("a pair picked while folded is still drawn on the map", r.get("fold_new_drawn"))
+
     check("hover readout panel exists", r.get("hover_box_exists"))
     check("hover panel hidden until the cursor is over a circle",
           r.get("hover_hidden_at_rest") is True)

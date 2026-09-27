@@ -11,12 +11,33 @@
     color-scheme: light;
     --bg: #f6f7f9; --panel: #ffffff; --ink: #1b2430; --muted: #5d6a7a; --line: #dfe3e8;
     --ovl: #c4232d; --ok: #1a7f4b; --warn: #a15c00;
+    --control: #46505c;      /* neutral graphite for controls that aren't tied to any one company, e.g. the score bar */
+    --hover: #eef1f5; --btn: #f3f5f8; --btnh: #e9edf2; --shadow: rgba(20,30,45,.22);
     --radius: 10px;
   }
   * { box-sizing: border-box; }
   html, body { height: 100%; margin: 0; }
   body { font: 14px/1.45 system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; color: var(--ink); background: var(--bg); }
   #app { display: grid; grid-template-columns: 410px 1fr; height: 100vh; }
+
+  /* the panel folds off to the left so the map can have the whole window */
+  #app.sidehidden { grid-template-columns: 0 1fr; }
+  #app.sidehidden #side { visibility: hidden; }
+  .sidebtn { position: absolute; top: 14px; right: 16px; width: 30px; height: 30px;
+             border: 1px solid var(--line); border-radius: 8px; background: var(--panel);
+             color: var(--muted); cursor: pointer; font-size: 12px; line-height: 1;
+             display: flex; align-items: center; justify-content: center; }
+  .sidebtn:hover { color: var(--ink); background: var(--hover); }
+  .sideopen { position: absolute; left: 0; top: 50%; transform: translateY(-50%); z-index: 900;
+              width: 22px; height: 54px; border: 1px solid var(--line); border-left: 0;
+              border-radius: 0 8px 8px 0; background: var(--panel); color: var(--muted);
+              cursor: pointer; font-size: 12px; display: none; align-items: center;
+              justify-content: center; box-shadow: 2px 0 8px var(--shadow); }
+  .sideopen:hover { color: var(--ink); }
+  #app.sidehidden .sideopen { display: flex; }
+  #side header { position: relative; }
+  #side h1 { padding-right: 40px; }
+
   #side { background: var(--panel); border-right: 1px solid var(--line); display: flex; flex-direction: column; min-height: 0; }
   #mapwrap { position: relative; height: 100%; min-height: 320px; }
   #map { height: 100%; }
@@ -32,32 +53,39 @@
   .controls { padding: 10px 18px; border-bottom: 1px solid var(--line); display: grid; gap: 8px; font-size: 12.5px; }
   .row { display: flex; align-items: center; gap: 8px; }
   .row label { min-width: 92px; color: var(--muted); }
-  .row input[type=range] { flex: 1; }
-  select { flex: 1; padding: 4px 6px; border: 1px solid var(--line); border-radius: 6px; background: #fff; color: var(--ink); }
+  .row input[type=range] { flex: 1; accent-color: var(--control); }
+  .chk input[type=checkbox] { accent-color: var(--control); }
+  select { flex: 1; padding: 4px 6px; border: 1px solid var(--line); border-radius: 6px; background: var(--panel); color: var(--ink); }
   .chk { display: flex; gap: 8px; align-items: center; color: var(--ink); }
   #listwrap { flex: 1; overflow-y: auto; min-height: 0; }
   #listhead { padding: 10px 18px 4px; font-weight: 600; display: flex; justify-content: space-between; }
   #listhead span { color: var(--muted); font-weight: 400; font-size: 12px; }
   .morebtn { display: block; width: calc(100% - 24px); margin: 6px 12px 12px; padding: 7px 10px;
-             font: inherit; font-size: 12px; color: var(--ink); background: #f3f5f8;
+             font: inherit; font-size: 12px; color: var(--ink); background: var(--btn);
              border: 1px solid var(--line); border-radius: 6px; cursor: pointer; }
-  .morebtn:hover { background: #e9edf2; }
-  .card { margin: 6px 12px; padding: 10px 12px; border: 1px solid var(--line); border-radius: var(--radius); cursor: pointer; background: #fff; }
+  .morebtn:hover { background: var(--btnh); }
+  .card { margin: 6px 12px; padding: 10px 12px; border: 1px solid var(--line); border-radius: var(--radius); cursor: pointer; background: var(--panel); }
   .card:hover { border-color: #b8c1cc; }
   .card.sel { border-color: var(--ovl); box-shadow: 0 0 0 2px rgba(196,35,45,.15); }
   .card:focus-visible { outline: 2px solid var(--ovl); outline-offset: 1px; }
+  /* the ranking is by score, but the card only showed distance and days, so an
+     ordered list read as unordered. The bar makes the order visible. */
+  .scorebar { display: flex; align-items: center; gap: 7px; margin-top: 6px; }
+  .scorebar i { height: 4px; border-radius: 2px; background: var(--control); flex: 0 0 auto;
+                min-width: 3px; max-width: 72%; }
+  .scorebar span { font-size: 10.5px; color: var(--muted); }
   .card .top { display: flex; justify-content: space-between; align-items: center; font-weight: 600; }
-  .rank { background: var(--ink); color: #fff; border-radius: 6px; padding: 1px 7px; font-size: 12px; margin-right: 6px; }
+  .rank { background: var(--ink); color: var(--panel); border-radius: 6px; padding: 1px 7px; font-size: 12px; margin-right: 6px; }
   .badge { font-size: 10.5px; border-radius: 999px; padding: 1px 8px; border: 1px solid; }
   .badge.high { color: var(--ok); border-color: var(--ok); } .badge.medium { color: var(--warn); border-color: var(--warn); } .badge.low { color: var(--ovl); border-color: var(--ovl); }
   .nm { margin-top: 6px; font-size: 12.5px; }
   .meta { color: var(--muted); font-size: 11.5px; margin-top: 5px; }
   #detail { position: absolute; right: 14px; bottom: 26px; width: 390px; max-width: calc(100% - 28px); max-height: 56%; overflow-y: auto; z-index: 800;
-    background: #fff; border: 1px solid var(--line); border-radius: 12px; box-shadow: 0 8px 28px rgba(20,30,45,.22); padding: 12px 14px; display: none; }
+    background: var(--panel); border: 1px solid var(--line); border-radius: 12px; box-shadow: 0 8px 28px var(--shadow); padding: 12px 14px; display: none; }
   /* hover readout: top-right, clear of #detail which sits bottom-right */
   #hoverinfo { position: absolute; right: 58px; top: 14px; width: 270px; max-width: calc(100% - 28px);
                z-index: 801; background: var(--panel); border: 1px solid var(--line); border-radius: 8px;
-               box-shadow: 0 4px 16px rgba(0,0,0,.13); padding: 10px 12px; pointer-events: none; }
+               box-shadow: 0 4px 16px var(--shadow); padding: 10px 12px; pointer-events: none; }
   #hoverinfo .ht { font-size: 12px; font-weight: 700; }
   #hoverinfo .hs { font-size: 11px; color: var(--muted); margin-top: 1px; }
   #hoverinfo .hrow { font-size: 11.5px; margin-top: 6px; line-height: 1.35; }
@@ -65,6 +93,7 @@
   #hoverinfo .hsplit { margin-top: 8px; padding-top: 7px; border-top: 1px solid var(--line); }
   #hoverinfo .hcount { font-size: 15px; font-weight: 700; }
   #hoverinfo .hcost { font-size: 13px; font-weight: 700; }
+  #hoverinfo .hcost.hred { color: var(--muted); font-style: italic; font-weight: 600; }
   #hoverinfo.two { border-color: #c9a227; box-shadow: 0 4px 16px rgba(201,162,39,.22); }
 
   /* the card folds down to its title bar so it stops covering the map, without
@@ -75,7 +104,7 @@
                   width: 26px; height: 26px; display: inline-flex; align-items: center;
                   justify-content: center; border-radius: 5px; font-size: 18px; font-weight: 600;
                   line-height: 1; }
-  #detail .fold:hover { background: #eef1f5; color: var(--ink); }
+  #detail .fold:hover { background: var(--hover); color: var(--ink); }
   #detail.folded { width: auto; max-width: min(340px, calc(100% - 28px)); max-height: none;
                    overflow: visible; padding-bottom: 8px; cursor: pointer; }
   #detail.folded .dbody { display: none; }
@@ -114,6 +143,7 @@
   <aside id="side">
     <header>
       <h1>Gridlock: where utilities' construction plans collide</h1>
+      <button class="sidebtn" id="sidebtn" type="button" title="Hide panel" aria-label="Hide the side panel" aria-expanded="true">&#10094;</button>
       <div class="sub" id="sub-companies">planned transmission projects &middot; overlap = centres &lt; 25 mi apart</div>
       <div class="kpis">
         <div class="kpi"><b id="k-total">-</b><span>located projects</span></div>
@@ -126,6 +156,8 @@
     </header>
     <section class="controls" aria-label="Filters">
       <div class="row"><label for="miles">Max distance</label><input id="miles" type="range" min="2" max="25" step="1" value="25"><output id="miles-out">25 mi</output></div>
+      <div class="row"><label for="sortby">Order by</label>
+        <select id="sortby"><option value="score">best match</option><option value="dist">distance</option><option value="gap">time gap</option><option value="date">soonest in service</option></select></div>
       <div class="row"><label for="gap">Time gap</label>
         <select id="gap"><option value="99999">any</option><option value="365">within 1 year</option><option value="730">within 2 years</option><option value="1825">within 5 years</option></select></div>
       <div class="row"><label for="conf">Location quality</label>
@@ -141,6 +173,7 @@
   </aside>
   <main id="mapwrap">
     <div id="map" aria-label="Map of planned projects"></div>
+    <button class="sideopen" id="sideopen" type="button" title="Show panel" aria-label="Show the side panel">&#10095;</button>
     <div id="hoverinfo" aria-live="polite" hidden></div>
     <section id="detail" aria-live="polite"></section>
   </main>
@@ -214,15 +247,24 @@ function checkedRadiiCompanies() {
 
 const byId = {}; DATA.projects.forEach(p => byId[p.id] = p);
 const map = L.map('map', {zoomSnap: 0.25}).fitBounds([[31.7, -84.4], [35.1, -78.9]]);
-// keyless base maps: Esri light-gray (default, with place labels) or the standard OpenStreetMap style
+// Keyless base maps, all from hosts that need no token. Topo is the default:
+// green land and blue water give the map some life, while keeping roads muted
+// enough that the blue and orange project lines still read on top. Esri's
+// street style was rejected for exactly that reason -- its red road network
+// competes with the orange Georgia Power lines.
+const esriTopo = L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Topo_Map/MapServer/tile/{z}/{y}/{x}', {
+  attribution: 'Tiles &copy; Esri &mdash; Esri, HERE, Garmin, &copy; OpenStreetMap contributors',
+  maxNativeZoom: 18, maxZoom: 18}).addTo(map);
 const esriGray = L.layerGroup([
   L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/Canvas/World_Light_Gray_Base/MapServer/tile/{z}/{y}/{x}', {
     attribution: 'Tiles &copy; Esri &mdash; Esri, HERE, Garmin, &copy; OpenStreetMap contributors', maxNativeZoom: 16, maxZoom: 18}),
   L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/Canvas/World_Light_Gray_Reference/MapServer/tile/{z}/{y}/{x}', {
-    maxNativeZoom: 16, maxZoom: 18})]).addTo(map);
+    maxNativeZoom: 16, maxZoom: 18})]);
 const osmStreet = L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', {
   attribution: '&copy; OpenStreetMap contributors', maxZoom: 19});
-L.control.layers({'Light map (Esri)': esriGray, 'Street map (OpenStreetMap)': osmStreet}, null, {position: 'topright', collapsed: true}).addTo(map);
+L.control.layers({'Terrain (Esri Topo)': esriTopo, 'Pale grey (Esri Canvas)': esriGray,
+                  'Street map (OpenStreetMap)': osmStreet},
+                 null, {position: 'topright', collapsed: true}).addTo(map);
 map.createPane('projects').style.zIndex = 420;
 map.createPane('overlaps').style.zIndex = 450;
 map.createPane('selected').style.zIndex = 470;      // the selected pair sits above the (faded) rest
@@ -354,6 +396,17 @@ function render() {
   visible = filtered();
   const opps = groupOpps(visible);
   items = document.getElementById('group').checked ? opps : visible;
+  // De-duplication above must see the pairs best-first, so the user's ordering
+  // is applied afterwards, for display only.
+  const soonest = o => Math.min(new Date(byId[o.a].date), new Date(byId[o.b].date));
+  const SORTS = {
+    score: (a, b) => b.rscore - a.rscore,
+    dist:  (a, b) => a.dist - b.dist,
+    gap:   (a, b) => a.gap - b.gap,
+    // overlaps carry no dates of their own; take the earlier of the two projects'
+    date:  (a, b) => soonest(a) - soonest(b)
+  };
+  items = items.slice().sort(SORTS[document.getElementById('sortby').value] || SORTS.score);
   document.getElementById('miles-out').textContent = document.getElementById('miles').value + ' mi';
   const inOv = new Set(); visible.forEach(o => { inOv.add(o.a); inOv.add(o.b); });
   layerProjects.clearLayers(); layerOverlaps.clearLayers(); layerSel.clearLayers();
@@ -409,6 +462,7 @@ function renderList() {
     return `
     <div class="card${selected === o.id ? ' sel' : ''}" role="button" tabindex="0" data-id="${esc(o.id)}">
       <div class="top"><span><span class="rank">#${i + 1}</span>${o.dist.toFixed(1)} mi &middot; ${o.gap} days apart</span><span class="badge ${esc(o.conf)}">${esc(o.conf)}</span></div>
+      <div class="scorebar" title="70% distance, 30% schedule, adjusted for location confidence"><i style="width:${Math.round(o.rscore * 100)}%"></i><span>${o.rscore.toFixed(2)}</span></div>
       <div class="nm"><span style="color:${ca.color};font-weight:600">${esc(ca.short)}</span> ${esc(o.nameA)}<br><span style="color:${cb.color};font-weight:600">${esc(cb.short)}</span> ${esc(o.nameB)}</div>
       <div class="meta">${esc(o.why)}</div>
       ${bits.length ? `<div class="meta">${bits.join(' &middot; ')}</div>` : ''}
@@ -702,25 +756,34 @@ function sharedProjects(hits) {
 // "combined") automatically if that company's costs ever became available too.
 function costBlock(hits) {
   const ids = new Set(hits.map(r => r.p.id));
-  const costed = hits.filter(r => r.p.cost);
-  const costs = costed.map(r => r.p.cost);
-  const spend = costs.reduce((s, c) => s + c, 0);
+  // Group by company rather than assuming a fixed two sides: any of the 5 companies
+  // may or may not publish project costs, and a hover can mix several of them.
+  const byCompany = new Map();
+  hits.forEach(r => {
+    const short = companyOf(r.p.util).short;
+    if (!byCompany.has(short)) byCompany.set(short, []);
+    byCompany.get(short).push(r);
+  });
   const est = visible.filter(o => (ids.has(o.a) || ids.has(o.b)) && o.lo != null && o.lo > 0)
                      .sort((x, y) => y.rscore - x.rscore)[0];
-  if (!costs.length && !est) return '';
-  const spendCompanies = new Set(costed.map(r => companyOf(r.p.util).short));
-  const spendLabel = spendCompanies.size === 1 ? [...spendCompanies][0] : 'combined';
-  return '<div class="hsplit">'
-    + (costs.length
-        ? `<div class="hrow"><span class="hcost">${money(spend)}</span>
-             <span class="hs">planned ${esc(spendLabel)} spend${costs.length < hits.length
-               ? ' (' + costs.length + ' of ' + hits.length + ' published)' : ''}</span></div>`
-        : '')
-    + (est
-        ? `<div class="hrow"><b>${money(est.lo)} &ndash; ${money(est.hi)}</b>
-             <span class="hs">rough saving if coordinated &middot; ${esc(est.id)}</span></div>`
-        : '<div class="hrow hs">no cost saving estimated for these overlaps</div>')
-    + '</div>';
+  const rows = [];
+  byCompany.forEach((rs, short) => {
+    const costs = rs.map(r => r.p.cost).filter(c => c);
+    if (costs.length) {
+      rows.push(`<div class="hrow"><span class="hcost">${money(costs.reduce((s, c) => s + c, 0))}</span>
+        <span class="hs">planned ${esc(short)} spend${costs.length < rs.length ? ' (' + costs.length + ' of ' + rs.length + ' published)' : ''}</span></div>`);
+    } else {
+      // a company with no published cost here says so, rather than a silent gap
+      // that reads as missing data (most of the 5 companies redact theirs today)
+      rows.push(`<div class="hrow"><span class="hcost hred">redacted</span>
+        <span class="hs">${esc(short)} spend, not published${rs.length > 1 ? ' (' + rs.length + ' projects here)' : ''}</span></div>`);
+    }
+  });
+  rows.push(est
+    ? `<div class="hrow"><b>${money(est.lo)} &ndash; ${money(est.hi)}</b>
+         <span class="hs">rough saving if coordinated &middot; ${esc(est.id)}</span></div>`
+    : '<div class="hrow hs">no cost saving estimated for these overlaps</div>');
+  return rows.length ? '<div class="hsplit">' + rows.join('') + '</div>' : '';
 }
 
 function trim(t, n) { return t.length > n ? t.slice(0, n - 1).trimEnd() + '…' : t; }
@@ -775,7 +838,22 @@ document.getElementById('sub-companies').textContent =
 const milesEl = document.getElementById('miles');
 milesEl.max = GLOBAL_MAX_MI; milesEl.value = GLOBAL_MAX_MI;
 document.getElementById('miles-out').textContent = GLOBAL_MAX_MI + ' mi';
-['miles', 'gap', 'conf', 'showall', 'group'].forEach(id => document.getElementById(id).addEventListener('input', render));
+
+// ---- hide the side panel -------------------------------------------------
+// Leaflet sizes itself from its container, so the map has to be told after the
+// grid column changes or it paints into the old width.
+(function () {
+  const app = document.getElementById('app');
+  const set = hidden => {
+    app.classList.toggle('sidehidden', hidden);
+    document.getElementById('sidebtn').setAttribute('aria-expanded', String(!hidden));
+    setTimeout(() => map.invalidateSize(), 220);
+  };
+  document.getElementById('sidebtn').addEventListener('click', () => set(true));
+  document.getElementById('sideopen').addEventListener('click', () => set(false));
+})();
+
+['miles', 'gap', 'conf', 'showall', 'group', 'sortby'].forEach(id => document.getElementById(id).addEventListener('input', render));
 render();
 if (visible.length) select(visible[0].id, false);
 </script>
