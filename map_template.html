@@ -125,6 +125,7 @@
   #hoverinfo .hsplit { margin-top: 8px; padding-top: 7px; border-top: 1px solid var(--line); }
   #hoverinfo .hcount { font-size: 15px; font-weight: 700; }
   #hoverinfo .hcost { font-size: 13px; font-weight: 700; }
+  #hoverinfo .hcost.hred { color: var(--muted); font-style: italic; font-weight: 600; }
   #hoverinfo.two { border-color: #c9a227; box-shadow: 0 4px 16px rgba(201,162,39,.22); }
 
   /* the card folds down to its title bar so it stops covering the map, without
@@ -202,6 +203,7 @@
       <label class="chk"><input id="showall" type="checkbox" checked> show projects that do not overlap</label>
       <label class="chk"><input id="group" type="checkbox" checked> merge duplicates (one row per opportunity)</label>
       <label class="chk"><input id="radii" type="checkbox"> draw the 25-mile circle for every overlapping Dominion project</label>
+      <label class="chk"><input id="radiiG" type="checkbox"> draw the 25-mile circle for every overlapping Georgia Power project</label>
       <label class="chk"><input id="partners" type="checkbox"> include Georgia ITS partner projects (GTC / MEAG / DU)</label>
     </section>
     <div id="listhead"><div id="listtitle">Top coordination opportunities</div><span id="listcount"></span></div>
@@ -417,11 +419,15 @@ function render() {
     if (inOv.has(p.id)) drawProject(p, layerOverlaps, {weight: 5, opacity: 1, pane: 'overlaps', halo: true});
     else if (showAll) drawProject(p, layerProjects, {weight: 2, opacity: .35, hollow: true});
   });
-  if (document.getElementById('radii').checked) {      // optional: the 25-mile circle for every overlapping Dominion project
-    DATA.projects.filter(p => inOv.has(p.id) && p.util.startsWith('Dominion')).forEach(p =>
-      rings.push({kind: 'all', p: p, base: {weight: 2, fillOpacity: .04},
-        layer: L.circle(p.c, {radius: 25 * 1609.34, color: COL.desc, weight: 2, dashArray: '6 7', fillColor: COL.desc, fillOpacity: .04, interactive: false}).addTo(layerOverlaps)}));
-  }
+  // Optional: the 25-mile circle around every overlapping project of one side.
+  // The rule is symmetric, so either utility can be the set of centres.
+  const allRadii = (pred, color) => DATA.projects
+    .filter(p => inOv.has(p.id) && p.c && pred(p))
+    .forEach(p => rings.push({kind: 'all', p: p, base: {weight: 2, fillOpacity: .04},
+      layer: L.circle(p.c, {radius: 25 * 1609.34, color: color, weight: 2, dashArray: '6 7',
+        fillColor: color, fillOpacity: .04, interactive: false}).addTo(layerOverlaps)}));
+  if (document.getElementById('radii').checked) allRadii(isDominion, COL.desc);
+  if (document.getElementById('radiiG').checked) allRadii(p => !isDominion(p), COL.gpc);
   const nD = DATA.projects.filter(p => p.util.startsWith('Dominion') && p.c).length;
   const nG = DATA.projects.filter(p => p.util === 'Georgia Power' && p.c && (showPartners || ['GPC', 'SAV'].includes(p.sponsor))).length;
   const dOv = new Set(visible.map(o => o.a));
@@ -743,22 +749,28 @@ function sharedProjects(hits) {
 // Power redacts its costs, so spend is the Dominion side only.
 function costBlock(hits) {
   const ids = new Set(hits.map(r => r.p.id));
-  const costs = hits.map(r => r.p.cost).filter(c => c);
+  const dom = hits.filter(r => isDominion(r.p));
+  const gpc = hits.filter(r => !isDominion(r.p));
+  const costs = dom.map(r => r.p.cost).filter(c => c);
   const spend = costs.reduce((s, c) => s + c, 0);
   const est = visible.filter(o => (ids.has(o.a) || ids.has(o.b)) && o.lo != null && o.lo > 0)
                      .sort((x, y) => y.rscore - x.rscore)[0];
-  if (!costs.length && !est) return '';
-  return '<div class="hsplit">'
-    + (costs.length
-        ? `<div class="hrow"><span class="hcost">${money(spend)}</span>
-             <span class="hs">planned Dominion spend${costs.length < hits.length
-               ? ' (' + costs.length + ' of ' + hits.length + ' published)' : ''}</span></div>`
-        : '')
-    + (est
-        ? `<div class="hrow"><b>${money(est.lo)} &ndash; ${money(est.hi)}</b>
-             <span class="hs">rough saving if coordinated &middot; ${esc(est.id)}</span></div>`
-        : '<div class="hrow hs">no cost saving estimated for these overlaps</div>')
-    + '</div>';
+  const rows = [];
+  if (costs.length) rows.push(
+    `<div class="hrow"><span class="hcost">${money(spend)}</span>
+       <span class="hs">planned Dominion spend${costs.length < dom.length
+         ? ' (' + costs.length + ' of ' + dom.length + ' published)' : ''}</span></div>`);
+  // Georgia Power redacts per-project costs in its public IRP, so there is no
+  // figure to sum. Saying so beats leaving a gap that reads as missing data.
+  if (gpc.length) rows.push(
+    `<div class="hrow"><span class="hcost hred">redacted</span>
+       <span class="hs">Georgia Power spend, withheld in the public IRP${gpc.length > 1
+         ? ' (' + gpc.length + ' projects here)' : ''}</span></div>`);
+  rows.push(est
+    ? `<div class="hrow"><b>${money(est.lo)} &ndash; ${money(est.hi)}</b>
+         <span class="hs">rough saving if coordinated &middot; ${esc(est.id)}</span></div>`
+    : '<div class="hrow hs">no cost saving estimated for these overlaps</div>');
+  return rows.length ? '<div class="hsplit">' + rows.join('') + '</div>' : '';
 }
 
 function trim(t, n) { return t.length > n ? t.slice(0, n - 1).trimEnd() + '\u2026' : t; }
@@ -802,7 +814,7 @@ map.on('mousemove', e => {
 map.on('mouseout', clearHover);
 
 if (!DATA.partners.length) document.getElementById('partners').closest('label').style.display = 'none';
-['miles', 'gap', 'conf', 'showall', 'group', 'radii', 'partners'].forEach(id => document.getElementById(id).addEventListener('input', render));
+['miles', 'gap', 'conf', 'showall', 'group', 'radii', 'radiiG', 'partners'].forEach(id => document.getElementById(id).addEventListener('input', render));
 render();
 if (visible.length) select(visible[0].id, false);
 </script>

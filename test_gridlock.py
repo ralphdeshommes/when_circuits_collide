@@ -320,6 +320,27 @@ try {
   // The page auto-selects the top opportunity, and that selection draws extra
   // geometry. A filter that hides the selected pair clears it, so re-select
   // before measuring or the comparison is against a different baseline.
+  // Georgia Power circles: the same control, the other side of the rule.
+  const rgB = el('radiiG');
+  out.gcirc_checkbox = !!rgB;
+  el('radii').checked = false; fire(el('radii'));
+  rgB.checked = true; fire(rgB);
+  out.gcirc_rings = rings.filter(r => r.kind === 'all').length;
+  out.gcirc_all_georgia = rings.filter(r => r.kind === 'all').every(r => !isDominion(r.p));
+  const gRing = rings.find(r => r.kind === 'all' && !isDominion(r.p));
+  renderHover([gRing]);
+  out.gcirc_hover = el('hoverinfo').textContent.replace(/\s+/g, ' ').trim();
+  el('radii').checked = true; fire(el('radii'));
+  out.gcirc_both = rings.filter(r => r.kind === 'all').length;
+  let mixed = null;
+  for (const a of rings) { const h = ringsUnder(L.latLng(a.p.c));
+    if (h.some(x => isDominion(x.p)) && h.some(x => !isDominion(x.p))) { mixed = h; break; } }
+  out.gcirc_mixed_found = !!mixed;
+  if (mixed) { renderHover(mixed);
+    out.gcirc_mixed = el('hoverinfo').textContent.replace(/\s+/g, ' ').trim(); }
+  clearHover();
+  rgB.checked = false; fire(rgB); el('radii').checked = false; fire(el('radii'));
+
   document.querySelector('.card').click();
   const ra = el('radii');
   out.paths_baseline = document.querySelectorAll('path').length;
@@ -623,6 +644,31 @@ def test_map():
           r.get("fold_reopens_on_pick"))
     check("and its details are actually shown", r.get("fold_pick_shows_body"))
     check("a pair picked while folded is still drawn on the map", r.get("fold_new_drawn"))
+    # The 25-mile rule is symmetric, so Georgia Power gets the same circles
+    # control Dominion has.
+    check("there is a Georgia Power circles checkbox", r.get("gcirc_checkbox"))
+    check("it draws circles, and only on Georgia Power projects",
+          r.get("gcirc_rings", 0) > 1 and r.get("gcirc_all_georgia"),
+          r.get("gcirc_rings"))
+    check("both sides together draw more than one side alone",
+          r.get("gcirc_both", 0) > r.get("gcirc_rings", 0),
+          (r.get("gcirc_rings"), r.get("gcirc_both")))
+    check("a Georgia circle reports the Dominion projects inside it",
+          "Dominion projects inside" in (r.get("gcirc_hover") or ""),
+          r.get("gcirc_hover"))
+    # Georgia Power's costs are withheld in the IRP, so the panel must say that
+    # rather than leave a gap that reads as missing data.
+    check("a Georgia circle states the spend is redacted",
+          "redacted" in (r.get("gcirc_hover") or "").lower()
+          and "public IRP" in (r.get("gcirc_hover") or ""),
+          r.get("gcirc_hover"))
+    check("a Georgia circle still quotes the coordination saving",
+          "rough saving" in (r.get("gcirc_hover") or ""))
+    check("hovering both sides at once reports both spend lines",
+          r.get("gcirc_mixed_found") and "planned Dominion spend" in (r.get("gcirc_mixed") or "")
+          and "redacted" in (r.get("gcirc_mixed") or "").lower(),
+          (r.get("gcirc_mixed") or "")[:120])
+
     check("hover readout panel exists", r.get("hover_box_exists"))
     check("hover panel hidden until the cursor is over a circle",
           r.get("hover_hidden_at_rest") is True)
