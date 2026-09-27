@@ -44,8 +44,14 @@ own number.
 * A project with two substations is two dots (the substations) joined by a line, colored by company. A
   project with only one location has no line and is a single dot instead (hollow if it overlaps nothing).
   Red glow = the project takes part in an overlap. Dotted line or dashed outline = low-confidence location.
-* Filters: maximum distance, time gap, location quality. Tick *draw the 25-mile circle for every
-  overlapping project* to see all the circles at once.
+* Filters: maximum distance, time gap, location quality. Tick a company's box under *draw circles
+  for* to see its 25-mile circles on every one of its overlapping projects at once; tick several to
+  compare companies' reach side by side.
+* **Order by** re-sorts the ranked list: best match (the default 70% distance / 30% schedule score,
+  shown as a bar on each card so the ranking is visible at a glance, not just implied by position),
+  distance, time gap, or soonest in-service date.
+* The **&#10094; button** in the header folds the whole side panel away so the map has the full
+  window; a small tab on the map's left edge (**&#10095;**) brings it back.
 
 ## Result
 
